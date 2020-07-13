@@ -1,7 +1,7 @@
 #include <sourcemod>
 
-#define MAX_INT_STRING 6
-#define VERSION "1.0"
+#define MAX_ID_STRING 6
+#define VERSION "1.1"
 
 public Plugin myinfo =
 {
@@ -37,14 +37,14 @@ public void OnPluginStart()
 
 public void OnClientConnected(int client)
 {
-    char playerID_s[MAX_INT_STRING];
+    char playerID_s[MAX_ID_STRING];
 
     // Filter fake clients
     if(!client || IsFakeClient(client))
         return;
 
     // Get player ID as a string
-    IntToString(GetClientUserId(client), playerID_s, MAX_INT_STRING);
+    IntToString(GetClientUserId(client), playerID_s, MAX_ID_STRING);
 
     // Check if player is already in the list of IDs
     if(SetTrieValue(g_playerIDs, playerID_s, 1, false))
@@ -57,12 +57,12 @@ public void OnClientConnected(int client)
 
 public Action event_PlayerDisconnect(Event event, const char[] name, bool dontBroadcast)
 {
-    char playerID_s[MAX_INT_STRING];
+    char playerID_s[MAX_ID_STRING];
 
     // Get the player ID as an integer then as a string
     int client = GetClientOfUserId(GetEventInt(event, "userid"));
     new playerID = GetClientUserId(client);
-    IntToString(playerID, playerID_s, MAX_INT_STRING);
+    IntToString(playerID, playerID_s, MAX_ID_STRING);
 
     // Filter fake clients
     if (!playerID || IsFakeClient(client))
@@ -84,8 +84,8 @@ public Action event_PlayerDisconnect(Event event, const char[] name, bool dontBr
 
 public Action ExecCfg(Handle timer)
 {
-    char cfg[MAX_INT_STRING];
+    char cfg[PLATFORM_MAX_PATH];
 
-    GetConVarString(g_config, cfg, MAX_INT_STRING);
+    GetConVarString(g_config, cfg, sizeof(cfg));
     ServerCommand("exec \"%s\"", cfg);
 }
