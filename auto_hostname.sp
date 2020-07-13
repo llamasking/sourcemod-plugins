@@ -1,6 +1,6 @@
 #include <sourcemod>
 
-#define VERSION "1.0"
+#define VERSION "1.0.1"
 
 public Plugin myinfo =
 {
@@ -36,8 +36,6 @@ public void OnMapStart()
         char g_map[512];
         GetCurrentMap(g_map, sizeof(g_map));
         GetMapDisplayName(g_map, g_map, sizeof(g_map));
-
-        LogMessage("===== MapA: %s =====", g_map);
 
         // Break apart the map name
         int i = StrContains(g_map, "_") + 1;
