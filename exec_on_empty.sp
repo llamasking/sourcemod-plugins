@@ -22,7 +22,7 @@ public void OnPluginStart()
 {
     // Create ConVars
     g_enabled = CreateConVar("sm_empty_enabled", "1", "Whether or not the plugin is enabled.", FCVAR_PROTECTED, true, 0.0, true, 1.0);
-    g_config  = CreateConVar("sm_empty_config", "", "The config to run when the server is empty.", FCVAR_PROTECTED);
+    g_config  = CreateConVar("sm_empty_config", "", "The config to run when the server emptys.", FCVAR_PROTECTED);
     CreateConVar("sm_empty_version", VERSION, "Plugin version.", FCVAR_DONTRECORD);
 
     // Create table of IDs
@@ -44,7 +44,7 @@ public void OnClientConnected(int client)
         return;
 
     // Get player ID as a string
-    IntToString(GetClientUserId(client), playerID_s, MAX_ID_STRING);
+    IntToString(GetClientUserId(client), playerID_s, sizeof(playerID_s));
 
     // Check if player is already in the list of IDs
     if(SetTrieValue(g_playerIDs, playerID_s, 1, false))
@@ -62,7 +62,7 @@ public Action event_PlayerDisconnect(Event event, const char[] name, bool dontBr
     // Get the player ID as an integer then as a string
     int client = GetClientOfUserId(GetEventInt(event, "userid"));
     new playerID = GetClientUserId(client);
-    IntToString(playerID, playerID_s, MAX_ID_STRING);
+    IntToString(playerID, playerID_s, sizeof(playerID_s));
 
     // Filter fake clients
     if (!playerID || IsFakeClient(client))
