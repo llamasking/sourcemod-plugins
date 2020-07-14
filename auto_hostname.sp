@@ -1,6 +1,6 @@
 #include <sourcemod>
 
-#define VERSION "1.0.1"
+#define VERSION "1.1"
 
 public Plugin myinfo =
 {
@@ -25,9 +25,25 @@ public void OnPluginStart()
 
     // Auto-generate config file if it's not there
     AutoExecConfig(true, "auto_hostname.cfg");
+
+    // Hook for Convar Changes
+    HookConVarChange(g_prefix, OnConVarChange);
+    HookConVarChange(g_suffix, OnConVarChange);
+}
+
+public OnConVarChange(ConVar convar, const char[] oldValue, const char[] newValue)
+{
+    // Wait a little bit before updating the hostname. That way other configs can make their changes to the name.
+    CreateTimer(0.5, UpdateHostname);
 }
 
 public void OnMapStart()
+{
+    // Wait a little bit before updating the hostname. That way other configs can make their changes to the name.
+    CreateTimer(0.5, UpdateHostname);
+}
+
+public Action UpdateHostname(Handle timer)
 {
     // Check if plugin is enabled
     if(GetConVarBool(g_enabled))
@@ -55,13 +71,16 @@ public void OnMapStart()
         SplitString(g_map, " Final", g_map, strlen(g_map));
         SplitString(g_map, " Rc", g_map, strlen(g_map));
 
+        // Trim whitespace
+        TrimString(g_map);
+
         // Declare some stuff before changing the hostname
         char pfx[32];
         char sfx[32];
 
         // Finally, actually change the hostname.
-        GetConVarString(g_prefix, pfx, sizeof(pfx))
-        GetConVarString(g_suffix, sfx, sizeof(sfx))
+        GetConVarString(g_prefix, pfx, sizeof(pfx));
+        GetConVarString(g_suffix, sfx, sizeof(sfx));
         ServerCommand("hostname \"%s %s %s\"", pfx, g_map, sfx);
     }
 }
