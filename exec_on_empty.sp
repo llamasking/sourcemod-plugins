@@ -1,7 +1,7 @@
 #include <sourcemod>
 
 #define MAX_ID_STRING 6
-#define VERSION "1.1"
+#define VERSION "1.2"
 
 public Plugin myinfo =
 {
@@ -59,8 +59,14 @@ public Action event_PlayerDisconnect(Event event, const char[] name, bool dontBr
 {
     char playerID_s[MAX_ID_STRING];
 
-    // Get the player ID as an integer then as a string
+    // Get the client ID
     int client = GetClientOfUserId(GetEventInt(event, "userid"));
+
+    // Filter fake clients
+    if(!client || IsFakeClient(client))
+        return;
+
+    // Get the client ID as a string
     new playerID = GetClientUserId(client);
     IntToString(playerID, playerID_s, sizeof(playerID_s));
 
