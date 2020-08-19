@@ -1,7 +1,7 @@
 #include <sourcemod>
 
 #define MAX_ID_STRING 6
-#define VERSION "1.2"
+#define VERSION "1.3"
 
 public Plugin myinfo =
 {
@@ -14,8 +14,9 @@ public Plugin myinfo =
 
 ConVar g_enabled;       // Whether or not the plugin is on
 ConVar g_config;        // Config file to load
+ConVar g_debug;         // Whether or not debug mode is on
 
-new g_players;          // Player count
+int g_players;          // Player count
 Handle g_playerIDs;     // List of player IDs
 
 public void OnPluginStart()
@@ -23,6 +24,7 @@ public void OnPluginStart()
     // Create ConVars
     g_enabled = CreateConVar("sm_empty_enabled", "1", "Whether or not the plugin is enabled.", FCVAR_PROTECTED, true, 0.0, true, 1.0);
     g_config  = CreateConVar("sm_empty_config", "", "The config to run when the server emptys.", FCVAR_PROTECTED);
+    g_debug   = CreateConVar("sm_empty_debug", "0", "Log extra things to console.", FCVAR_PROTECTED, true, 0.0, true, 1.0);
     CreateConVar("sm_empty_version", VERSION, "Plugin version.", FCVAR_DONTRECORD);
 
     // Create table of IDs
@@ -31,6 +33,9 @@ public void OnPluginStart()
     // Hook the disconnect event.
     HookEvent("player_disconnect", event_PlayerDisconnect, EventHookMode_Post);
 
+    // Register the "it's broken" command
+    RegAdminCmd("sm_empty_thefuck", Command_TheFuck, ADMFLAG_GENERIC, "It's broken! What's going on?!");
+
     // Auto-generate config file if it's not there
     AutoExecConfig(true, "exec_on_empty.cfg");
 }
@@ -38,8 +43,11 @@ public void OnPluginStart()
 public void OnClientConnected(int client)
 {
     char playerID_s[MAX_ID_STRING];
+    //char auth[MAX_ID_STRING];
 
     // Filter fake clients
+    //GetClientAuthId(client, AuthId_Steam2, auth, sizeof(auth));
+    //if(StrEqual(auth, "BOT"))
     if(!client || IsFakeClient(client))
         return;
 
@@ -50,6 +58,13 @@ public void OnClientConnected(int client)
     if(SetTrieValue(g_playerIDs, playerID_s, 1, false))
     {
         g_players++;
+
+        // Debug logging
+        if(GetConVarBool(g_debug)) {
+            char g_players_s[4];
+            IntToString(g_players, g_players_s, sizeof(g_players_s));
+            LogMessage("Player connected! Count: %s", g_players_s);
+        }
     }
 
     return;
@@ -79,8 +94,15 @@ public Action event_PlayerDisconnect(Event event, const char[] name, bool dontBr
     {
         g_players--;
 
+        // Debug logging
+        if(GetConVarBool(g_debug)) {
+            char g_players_s[4];
+            IntToString(g_players, g_players_s, sizeof(g_players_s));
+            LogMessage("Player disconnected! Count: %s", g_players_s);
+        }
+
         // If there are no players left in the server and plugin is enabled
-        if((g_players == 0) && GetConVarBool(g_enabled))
+        if(GetConVarBool(g_enabled) && (g_players == 0))
         {
             // Apparently there's issues if you do this immediately.
             CreateTimer(0.5, ExecCfg);
@@ -94,4 +116,11 @@ public Action ExecCfg(Handle timer)
 
     GetConVarString(g_config, cfg, sizeof(cfg));
     ServerCommand("exec \"%s\"", cfg);
+}
+
+public Action Command_TheFuck(int client, int args)
+{
+    char g_players_s[4];
+    IntToString(g_players, g_players_s, sizeof(g_players_s));
+    ReplyToCommand(client, "Count: %s", g_players_s);
 }
