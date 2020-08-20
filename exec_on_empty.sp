@@ -1,7 +1,7 @@
 #include <sourcemod>
 
 #define MAX_ID_STRING 6
-#define VERSION "1.3"
+#define VERSION "1.4"
 
 public Plugin myinfo =
 {
@@ -43,12 +43,11 @@ public void OnPluginStart()
 public void OnClientConnected(int client)
 {
     char playerID_s[MAX_ID_STRING];
-    //char auth[MAX_ID_STRING];
+    char auth[MAX_ID_STRING];
 
     // Filter fake clients
-    //GetClientAuthId(client, AuthId_Steam2, auth, sizeof(auth));
-    //if(StrEqual(auth, "BOT"))
-    if(!client || IsFakeClient(client))
+    GetClientAuthId(client, AuthId_Steam2, auth, sizeof(auth));
+    if(!client || IsFakeClient(client) || StrEqual(auth, "BOT"))
         return;
 
     // Get player ID as a string
@@ -73,21 +72,18 @@ public void OnClientConnected(int client)
 public Action event_PlayerDisconnect(Event event, const char[] name, bool dontBroadcast)
 {
     char playerID_s[MAX_ID_STRING];
+    char auth[MAX_ID_STRING];
 
     // Get the client ID
     int client = GetClientOfUserId(GetEventInt(event, "userid"));
 
     // Filter fake clients
-    if(!client || IsFakeClient(client))
+    GetClientAuthId(client, AuthId_Steam2, auth, sizeof(auth));
+    if(!client || IsFakeClient(client) || StrEqual(auth, "BOT"))
         return;
 
-    // Get the client ID as a string
-    new playerID = GetClientUserId(client);
-    IntToString(playerID, playerID_s, sizeof(playerID_s));
-
-    // Filter fake clients
-    if (!playerID || IsFakeClient(client))
-        return;
+    // Get player ID as a string
+    IntToString(GetClientUserId(client), playerID_s, sizeof(playerID_s));
 
     // Try to remove the player ID from the list of IDs
     if(RemoveFromTrie(g_playerIDs, playerID_s))
