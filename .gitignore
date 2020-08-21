@@ -1,0 +1,11 @@
+# Visual Studio: Code
+.vscode
+
+# Compiler
+include/
+compile.sh
+spcomp
+
+# Custom
+examples/
+test*
