@@ -4,7 +4,7 @@
 # Compiler
 include/
 compile.sh
-spcomp
+spcomp*
 
 # Custom
 examples/
