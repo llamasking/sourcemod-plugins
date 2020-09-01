@@ -27,11 +27,10 @@ public void OnPluginStart()
     AutoExecConfig();
 
     // Load the VIP table now.
-    //CreateTimer(1.0, UpdateVIPs);
-    UpdateVIPs();
+    CreateTimer(0.0, UpdateVIPs);
 
     // Timer to reload VIPs every 30 mins.
-    //CreateTimer(60.0 * 30, UpdateVIPs, _, TIMER_REPEAT);
+    CreateTimer(60.0 * 30, UpdateVIPs, _, TIMER_REPEAT);
 
     // I mean, timer's already started and I'm not bothered to write a shit load of things around this.
     CloseHandle(g_interval);
@@ -40,11 +39,11 @@ public void OnPluginStart()
 public void OnRebuildAdminCache(AdminCachePart part)
 {
     if (part == AdminCache_Admins)
-        UpdateVIPs();
+        CreateTimer(0.0, UpdateVIPs);
 }
 
 // Connect to DB and reload VIP group.
-public UpdateVIPs()
+public Action UpdateVIPs(Handle timer)
 {
     // Check for vip in databases.cfg.
     if(!SQL_CheckConfig("vip"))
@@ -56,6 +55,7 @@ public UpdateVIPs()
 
     Database.Connect(ConnectCallback, "vip");
 
+    // Since we only need the database once every X interval, I figure it's better to drop the connection and just reconnect next interval.
     CloseHandle(g_db);
 }
 
@@ -65,7 +65,7 @@ public void ConnectCallback(Database db, const char[] error, data)
     if(!db)
     {
         LogError("Could not connect to database: %s", error);
-        SetFailState("Could not connect to database: %s", error);
+        // SetFailState("Could not connect to database: %s", error);
         return;
     }
 

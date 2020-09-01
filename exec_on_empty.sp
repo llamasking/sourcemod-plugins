@@ -1,7 +1,7 @@
 #include <sourcemod>
 
 #define MAX_ID_STRING 6
-#define VERSION "1.5"
+#define VERSION "1.6"
 
 public Plugin myinfo =
 {
@@ -17,6 +17,7 @@ ConVar g_config;        // Config file to load
 
 int g_players;          // Player count
 Handle g_clients;       // List of clients connected
+Handle resetTimer;           // Timer to reset the map after everyone leaves
 
 public void OnPluginStart()
 {
@@ -27,9 +28,6 @@ public void OnPluginStart()
 
     // Create table of IDs
     g_clients = CreateTrie();
-
-    // Register the "it's broken" command
-    RegAdminCmd("sm_empty_thefuck", Command_TheFuck, ADMFLAG_GENERIC, "It's broken! What's going on?!");
 
     // Auto-generate config file if it's not there
     AutoExecConfig(true, "exec_on_empty.cfg");
@@ -72,25 +70,26 @@ public OnClientDisconnect(int client)
         g_players--;
 
         // If there are no players left in the server and plugin is enabled
-        if((g_players == 0) && GetConVarBool(g_enabled))
+        if((g_players == 0))
         {
             // Apparently there's issues if you do this immediately.
-            CreateTimer(0.5, ExecCfg);
+            resetTimer = CreateTimer(1.0, ExecCfg);
         }
     }
 }
 
+public void OnMapEnd() {
+    g_enabled.SetBool(false);
+    KillTimer(resetTimer);
+}
+
 public Action ExecCfg(Handle timer)
 {
+    if (!GetConVarBool(g_enabled))
+        return;
+
     char cfg[PLATFORM_MAX_PATH];
 
     GetConVarString(g_config, cfg, sizeof(cfg));
     ServerCommand("exec \"%s\"", cfg);
-}
-
-public Action Command_TheFuck(int client, int args)
-{
-    char g_players_s[4];
-    IntToString(g_players, g_players_s, sizeof(g_players_s));
-    ReplyToCommand(client, "Count: %s", g_players_s);
 }
