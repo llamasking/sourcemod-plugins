@@ -1,7 +1,7 @@
 #include <sourcemod>
 
 #define MAX_ID_STRING 6
-#define VERSION "1.6"
+#define VERSION "1.7"
 
 public Plugin myinfo =
 {
@@ -72,15 +72,20 @@ public OnClientDisconnect(int client)
         // If there are no players left in the server and plugin is enabled
         if((g_players == 0))
         {
-            // Apparently there's issues if you do this immediately.
+            // If you do this immediately, changing the map will run exec.
             resetTimer = CreateTimer(1.0, ExecCfg);
         }
     }
 }
 
+// Prevent running if the map is changing.
 public void OnMapEnd() {
-    g_enabled.SetBool(false);
-    KillTimer(resetTimer);
+    // Prevent errors when everyone actually does leave.
+    if (resetTimer != INVALID_HANDLE)
+    {
+        g_enabled.SetBool(false);
+        KillTimer(resetTimer);
+    }
 }
 
 public Action ExecCfg(Handle timer)
