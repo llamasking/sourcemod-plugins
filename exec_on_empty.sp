@@ -1,7 +1,8 @@
 #include <sourcemod>
 
 #define MAX_ID_STRING 6
-#define VERSION "1.7"
+#define VERSION "1.7.1"
+//#define DEBUG
 
 public Plugin myinfo =
 {
@@ -49,8 +50,6 @@ public void OnClientAuthorized(int client, const char[] auth)
     {
         g_players++;
     }
-
-    return;
 }
 
 public OnClientDisconnect(int client)
@@ -73,7 +72,7 @@ public OnClientDisconnect(int client)
         if((g_players == 0))
         {
             // If you do this immediately, changing the map will run exec.
-            resetTimer = CreateTimer(1.0, ExecCfg);
+            resetTimer = CreateTimer(2.5, ExecCfg);
         }
     }
 }
@@ -81,10 +80,9 @@ public OnClientDisconnect(int client)
 // Prevent running if the map is changing.
 public void OnMapEnd() {
     // Prevent errors when everyone actually does leave.
-    if (resetTimer != INVALID_HANDLE)
+    if (IsValidHandle(resetTimer))
     {
-        g_enabled.SetBool(false);
-        KillTimer(resetTimer);
+        CloseHandle(resetTimer);
     }
 }
 
