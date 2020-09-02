@@ -18,7 +18,7 @@ enum OS {
 
 public Plugin myinfo = {
 	name		= "Player Analytics",
-	author		= "Dr. McKay / Bara / sneaK",
+	author		= "Dr. McKay / Bara / sneaK / llamasking",
 	description	= "Logs analytical data about connecting players",
 	version		= PLUGIN_VERSION,
 	url			= "http://www.doctormckay.com"
