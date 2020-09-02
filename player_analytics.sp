@@ -24,7 +24,7 @@ public Plugin myinfo = {
 	url			= "http://www.doctormckay.com"
 };
 
-#define DEBUG
+//#define DEBUG
 
 #if !defined DEBUG
 Handle g_DB;
