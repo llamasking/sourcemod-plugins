@@ -3,10 +3,10 @@
 #include <sourcemod>
 #include <geoip>
 #undef REQUIRE_EXTENSIONS
-#include <geoipcity>
+//#include <geoipcity>
 #include <SteamWorks>
 
-#define PLUGIN_VERSION		"1.4.2"
+#define PLUGIN_VERSION		"1.5.0"
 
 enum OS {
 	OS_Unknown = -1,
@@ -24,7 +24,7 @@ public Plugin myinfo = {
 	url			= "http://www.doctormckay.com"
 };
 
-//#define DEBUG
+#define DEBUG
 
 #if !defined DEBUG
 Handle g_DB;
@@ -200,11 +200,10 @@ public void OnClientPostAdminCheck(int client) {
 		return;
 	}
 
-	CreateTimer(1.0, Timer_HandleConnect, GetClientUserId(client), TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
+	CreateTimer(1.0, Timer_HandleConnect, client, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
 }
 
-public Action Timer_HandleConnect(Handle timer, any userid) {
-	int client = GetClientOfUserId(userid);
+public Action Timer_HandleConnect(Handle timer, int client) {
 	if(client == 0) {
 		return Plugin_Stop;
 	}
@@ -238,8 +237,14 @@ public Action Timer_HandleConnect(Handle timer, any userid) {
 	flagstring[num] = '\0';
 	GetClientIP(client, ip, sizeof(ip));
 
-	if(GetFeatureStatus(FeatureType_Native, "GeoipGetRecord") != FeatureStatus_Available || !GeoipGetRecord(ip, city, region, country_name, country_code, country_code3)) {
-		GeoipCountry(ip, country_name, sizeof(country_name));
+	GeoipCode2(ip, country_code);
+	GeoipCode3(ip, country_code3);
+	GeoipCountry(ip, country_name, sizeof(country_name));
+
+	if(GetFeatureStatus(FeatureType_Native, "GeoipCity") == FeatureStatus_Available)
+	{
+		GeoipRegion(ip, region, sizeof(region));
+		GeoipCity(ip, city, sizeof(city));
 	}
 
 	strcopy(buffers[2], sizeof(buffers[]), city);
@@ -248,8 +253,16 @@ public Action Timer_HandleConnect(Handle timer, any userid) {
 	strcopy(buffers[5], sizeof(buffers[]), country_code);
 	strcopy(buffers[6], sizeof(buffers[]), country_code3);
 
-	if(STEAMWORKS_AVAILABLE() && SteamWorks_IsLoaded() && StrEqual(g_GameFolder, "csgo")) {
-		if(k_EUserHasLicenseResultDoesNotHaveLicense == SteamWorks_HasLicenseForApp(client, 624820)) {
+	if(STEAMWORKS_AVAILABLE() && SteamWorks_IsLoaded()) {
+		int premium_appid;
+		if (StrEqual(g_GameFolder, "csgo"))
+			premium_appid = 624820;
+		else if (StrEqual(g_GameFolder, "tf"))
+			premium_appid = 459;
+		else
+			premium_appid = 1;
+
+		if(k_EUserHasLicenseResultDoesNotHaveLicense == SteamWorks_HasLicenseForApp(client, premium_appid)) {
 			strcopy(buffers[7], sizeof(buffers[]), "0");
 		} else {
 			strcopy(buffers[7], sizeof(buffers[]), "1");
@@ -276,7 +289,7 @@ public Action Timer_HandleConnect(Handle timer, any userid) {
 #if !defined DEBUG
 			SQL_EscapeString(g_DB, buffers[i], escapedBuffers[i], sizeof(escapedBuffers[]));
 #endif
-			Format(escapedBuffers[i], sizeof(escapedBuffers[]), "'%s'", escapedBuffers[i]);
+			Format(escapedBuffers[i], sizeof(escapedBuffers[]), buffers[i]);
 		}
 	}
 
