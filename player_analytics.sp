@@ -6,7 +6,7 @@
 //#include <geoipcity>
 #include <SteamWorks>
 
-#define PLUGIN_VERSION		"1.5.1"
+#define PLUGIN_VERSION		"1.5.2"
 
 enum OS {
 	OS_Unknown = -1,
@@ -26,9 +26,7 @@ public Plugin myinfo = {
 
 //#define DEBUG
 
-#if !defined DEBUG
 Handle g_DB;
-#endif
 char g_IP[64];
 char g_GameFolder[64];
 Handle g_OSGamedata;
@@ -47,7 +45,6 @@ int g_OSQueries[MAXPLAYERS + 1];
 #define STEAMWORKS_AVAILABLE() (GetFeatureStatus(FeatureType_Native, "SteamWorks_IsLoaded") == FeatureStatus_Available)
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max) {
-#if !defined DEBUG
 	if(SQL_CheckConfig("player_analytics")) {
 		g_DB = SQL_Connect("player_analytics", true, error, err_max);
 	} else {
@@ -60,7 +57,6 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 
 	SQL_SetCharset(g_DB, "utf8mb4");
 	SQL_TQuery(g_DB, OnTableCreated, "CREATE TABLE IF NOT EXISTS `player_analytics` (id int(11) NOT NULL AUTO_INCREMENT, server_ip varchar(32) NOT NULL, name varchar(64), auth varchar(32), connect_time int(11) NOT NULL, connect_date date NOT NULL, connect_method varchar(64) DEFAULT NULL, numplayers tinyint(4) NOT NULL, map varchar(64) NOT NULL, duration int(11) DEFAULT NULL, flags varchar(32) NOT NULL, ip varchar(32) NOT NULL, city varchar(45), region varchar(45), country varchar(45), country_code varchar(2), country_code3 varchar(3), premium tinyint(1), html_motd_disabled tinyint(1), os varchar(32), PRIMARY KEY (id)) ENGINE=InnoDB  DEFAULT CHARSET=utf8");
-#endif
 
 	RegPluginLibrary("player_analytics");
 	CreateNative("PA_GetConnectionID", Native_GetConnectionID);
@@ -68,13 +64,11 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	return APLRes_Success;
 }
 
-#if !defined DEBUG
 public OnTableCreated(Handle:owner, Handle:hndl, const String:error[], any:data) {
 	if(hndl == INVALID_HANDLE) {
 		SetFailState("Unable to create table. %s", error);
 	}
 }
-#endif
 
 public void OnPluginStart() {
 	int ip = GetConVarInt(FindConVar("hostip"));
@@ -111,11 +105,7 @@ public void OnClientConnected(int client) {
 
 	char buffer[30];
 	if(GetClientInfo(client, "cl_connectmethod", buffer, sizeof(buffer))) {
-#if !defined DEBUG
 		SQL_EscapeString(g_DB, buffer, g_ConnectMethod[client], sizeof(g_ConnectMethod[]));
-#else
-		strcopy(g_ConnectMethod[client], sizeof(g_ConnectMethod[]), buffer);
-#endif
 		Format(g_ConnectMethod[client], sizeof(g_ConnectMethod[]), "'%s'", g_ConnectMethod[client]);
 	} else {
 		strcopy(g_ConnectMethod[client], sizeof(g_ConnectMethod[]), "NULL");
@@ -260,7 +250,7 @@ public Action Timer_HandleConnect(Handle timer, int client) {
 		else if (StrEqual(g_GameFolder, "tf"))
 			premium_appid = 459;
 		else
-			premium_appid = 1;
+			premium_appid = 1; // Nobody has this.
 
 		if(k_EUserHasLicenseResultDoesNotHaveLicense == SteamWorks_HasLicenseForApp(client, premium_appid)) {
 			strcopy(buffers[7], sizeof(buffers[]), "0");
@@ -281,21 +271,41 @@ public Action Timer_HandleConnect(Handle timer, int client) {
 		strcopy(buffers[9], sizeof(buffers[]), "Linux");
 	}
 
+	// Ok so basically this generates a random string (ex: "NULL_1927339430")
+	// This replaces empty cells (such as location if it doesn't resolve) with that string.
+	// Then, before sending the query to the SQL server, it replaces the string with null.
+	// Otherwise, we'd have a string of 'NULL' instead of a real null value.
+	// This prevents errors such as "Data too long for column 'country_code' at row 1."
+
+	// ## Randomization prevents issues:
+	// Namely, if someone joins the server with the name of "NULL," their name will
+	// be a null value in the SQL server.
+	// This is a massive amount of work to fix what is a very unlikely ocurrence,
+	// and even if it does happen, it will probably never even cause issues anyways.
+	// This doesn't even fix anything either. It just makes it incredibly unlikely.
+
+	char randomStr[18];
+	char randomInt_s[12];
+	IntToString(GetURandomInt(), randomInt_s, sizeof(randomStr));
+	strcopy(randomStr, sizeof(randomStr), "NULL_NUM");
+	ReplaceString(randomStr, sizeof(randomStr), "NUM", randomInt_s, true);
+
 	char escapedBuffers[10][513];
 	for(int i = 0; i < sizeof(buffers); i++) {
 		if(strlen(buffers[i]) == 0) {
-			strcopy(escapedBuffers[i], sizeof(escapedBuffers[]), "NULL");
+			strcopy(escapedBuffers[i], sizeof(escapedBuffers[]), randomStr);
 		} else {
-#if !defined DEBUG
 			SQL_EscapeString(g_DB, buffers[i], escapedBuffers[i], sizeof(escapedBuffers[]));
-#endif
-			Format(escapedBuffers[i], sizeof(escapedBuffers[]), buffers[i]);
 		}
 	}
 
 	char query[512];
 	Format(query, sizeof(query), "INSERT INTO `player_analytics` SET server_ip = '%s', name = '%s', auth = '%s', connect_time = %d, connect_date = '%s', connect_method = %s, numplayers = %d, map = '%s', flags = '%s', ip = '%s', city = '%s', region = '%s', country = '%s', country_code = '%s', country_code3 = '%s', premium = %s, html_motd_disabled = %s, os = '%s'",
 		g_IP, escapedBuffers[0], escapedBuffers[1], g_ConnectTime[client], date, g_ConnectMethod[client], g_NumPlayers[client], map, flagstring, ip, escapedBuffers[2], escapedBuffers[3], escapedBuffers[4], escapedBuffers[5], escapedBuffers[6], escapedBuffers[7], escapedBuffers[8], escapedBuffers[9]);
+
+	strcopy(randomStr, sizeof(randomStr), "'NULL_NUM'");
+	ReplaceString(randomStr, sizeof(randomStr), "NUM", randomInt_s, true);
+	ReplaceString(query, sizeof(query), randomStr, "NULL", true);
 
 #if !defined DEBUG
 	SQL_TQuery(g_DB, OnRowInserted, query, GetClientUserId(client));
@@ -315,7 +325,6 @@ GetRealClientCount() {
 	return total; // Note that this value will include the client who's connecting. If you want to get the number of players in-game when they actually initiated their connection, decrement this by one.
 }
 
-#if !defined DEBUG
 public OnRowInserted(Handle:owner, Handle:hndl, const String:error[], any:userid) {
 	int client = GetClientOfUserId(userid);
 	if(client == 0) {
@@ -336,7 +345,6 @@ public OnRowInserted(Handle:owner, Handle:hndl, const String:error[], any:userid
 	Call_Finish();
 	CloseHandle(fwd);
 }
-#endif
 
 public void OnClientDisconnect(int client) {
 	if(g_RowID[client] == -1 || g_ConnectTime[client] == 0) {
@@ -355,13 +363,11 @@ public void OnClientDisconnect(int client) {
 	g_ConnectTime[client] = 0;
 }
 
-#if !defined DEBUG
 public OnRowUpdated(Handle:owner, Handle:hndl, const String:error[], any:id) {
 	if(hndl == INVALID_HANDLE) {
 		LogError("Unable to update row %d. %s", id, error);
 	}
 }
-#endif
 
 public Native_GetConnectionID(Handle:plugin, numParams) {
 	int client = GetNativeCell(1);
