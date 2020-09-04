@@ -6,7 +6,7 @@
 //#include <geoipcity>
 #include <SteamWorks>
 
-#define PLUGIN_VERSION		"1.5.2"
+#define PLUGIN_VERSION		"1.5.3"
 
 enum OS {
 	OS_Unknown = -1,
@@ -55,8 +55,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 		return APLRes_Failure;
 	}
 
-	SQL_SetCharset(g_DB, "utf8mb4");
-	SQL_TQuery(g_DB, OnTableCreated, "CREATE TABLE IF NOT EXISTS `player_analytics` (id int(11) NOT NULL AUTO_INCREMENT, server_ip varchar(32) NOT NULL, name varchar(64), auth varchar(32), connect_time int(11) NOT NULL, connect_date date NOT NULL, connect_method varchar(64) DEFAULT NULL, numplayers tinyint(4) NOT NULL, map varchar(64) NOT NULL, duration int(11) DEFAULT NULL, flags varchar(32) NOT NULL, ip varchar(32) NOT NULL, city varchar(45), region varchar(45), country varchar(45), country_code varchar(2), country_code3 varchar(3), premium tinyint(1), html_motd_disabled tinyint(1), os varchar(32), PRIMARY KEY (id)) ENGINE=InnoDB  DEFAULT CHARSET=utf8");
+	SQL_TQuery(g_DB, OnTableCreated, "CREATE TABLE IF NOT EXISTS `player_analytics` (id int(11) NOT NULL AUTO_INCREMENT, server_ip varchar(32) NOT NULL, name varchar(64), auth varchar(32), connect_time int(11) NOT NULL, connect_date date NOT NULL, connect_method varchar(64) DEFAULT NULL, numplayers tinyint(4) NOT NULL, map varchar(64) NOT NULL, duration int(11) DEFAULT NULL, flags varchar(32) NOT NULL, ip varchar(32) NOT NULL, city varchar(45), region varchar(45), country varchar(45), country_code varchar(2), country_code3 varchar(3), premium tinyint(1), html_motd_disabled tinyint(1), os varchar(32), PRIMARY KEY (id))");
 
 	RegPluginLibrary("player_analytics");
 	CreateNative("PA_GetConnectionID", Native_GetConnectionID);
@@ -271,41 +270,24 @@ public Action Timer_HandleConnect(Handle timer, int client) {
 		strcopy(buffers[9], sizeof(buffers[]), "Linux");
 	}
 
-	// Ok so basically this generates a random string (ex: "NULL_1927339430")
-	// This replaces empty cells (such as location if it doesn't resolve) with that string.
-	// Then, before sending the query to the SQL server, it replaces the string with null.
-	// Otherwise, we'd have a string of 'NULL' instead of a real null value.
+	// This replaces empty cells (such as location if it doesn't resolve) with 'NULL'.
+	// Then, before sending the query to the SQL server, it replaces that with a true null instead of a string.
 	// This prevents errors such as "Data too long for column 'country_code' at row 1."
-
-	// ## Randomization prevents issues:
-	// Namely, if someone joins the server with the name of "NULL," their name will
-	// be a null value in the SQL server.
-	// This is a massive amount of work to fix what is a very unlikely ocurrence,
-	// and even if it does happen, it will probably never even cause issues anyways.
-	// This doesn't even fix anything either. It just makes it incredibly unlikely.
-
-	char randomStr[18];
-	char randomInt_s[12];
-	IntToString(GetURandomInt(), randomInt_s, sizeof(randomStr));
-	strcopy(randomStr, sizeof(randomStr), "NULL_NUM");
-	ReplaceString(randomStr, sizeof(randomStr), "NUM", randomInt_s, true);
 
 	char escapedBuffers[10][513];
 	for(int i = 0; i < sizeof(buffers); i++) {
 		if(strlen(buffers[i]) == 0) {
-			strcopy(escapedBuffers[i], sizeof(escapedBuffers[]), randomStr);
+			strcopy(escapedBuffers[i], sizeof(escapedBuffers[]), "NULL");
 		} else {
 			SQL_EscapeString(g_DB, buffers[i], escapedBuffers[i], sizeof(escapedBuffers[]));
 		}
 	}
 
 	char query[512];
-	Format(query, sizeof(query), "INSERT INTO `player_analytics` SET server_ip = '%s', name = '%s', auth = '%s', connect_time = %d, connect_date = '%s', connect_method = %s, numplayers = %d, map = '%s', flags = '%s', ip = '%s', city = '%s', region = '%s', country = '%s', country_code = '%s', country_code3 = '%s', premium = %s, html_motd_disabled = %s, os = '%s'",
+	Format(query, sizeof(query), "INSERT INTO `player_analytics` SET server_ip = '%s', name =\"%s\", auth = '%s', connect_time = %d, connect_date = '%s', connect_method = %s, numplayers = %d, map = '%s', flags = '%s', ip = '%s', city = '%s', region = '%s', country = '%s', country_code = '%s', country_code3 = '%s', premium = %s, html_motd_disabled = %s, os = '%s'",
 		g_IP, escapedBuffers[0], escapedBuffers[1], g_ConnectTime[client], date, g_ConnectMethod[client], g_NumPlayers[client], map, flagstring, ip, escapedBuffers[2], escapedBuffers[3], escapedBuffers[4], escapedBuffers[5], escapedBuffers[6], escapedBuffers[7], escapedBuffers[8], escapedBuffers[9]);
 
-	strcopy(randomStr, sizeof(randomStr), "'NULL_NUM'");
-	ReplaceString(randomStr, sizeof(randomStr), "NUM", randomInt_s, true);
-	ReplaceString(query, sizeof(query), randomStr, "NULL", true);
+	ReplaceString(query, sizeof(query), "'NULL'", "NULL", true);
 
 #if !defined DEBUG
 	SQL_TQuery(g_DB, OnRowInserted, query, GetClientUserId(client));
