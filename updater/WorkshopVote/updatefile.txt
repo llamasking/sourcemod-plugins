@@ -1,0 +1,19 @@
+"Updater"
+{
+	"Information"
+	{
+		"Version"
+		{
+			"Latest"	"0.0.0"
+		}
+
+		"Notes"	"Initial Test Release"
+	}
+
+	"Files"
+	{
+		"Plugin"	"Path_SM/plugins/wsvote.smx"
+
+		"Source"	"Path_SM/scripting/wsvote.sp"
+	}
+}

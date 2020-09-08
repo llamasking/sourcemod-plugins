@@ -10,7 +10,7 @@ public Plugin myinfo =
     author = "llamasking",
     description = "Executes a config whenever the server is empty.",
     version = VERSION,
-    url = "none"
+    url = "https://github.com/llamasking/sourcemod-plugins"
 }
 
 ConVar g_enabled;       // Whether or not the plugin is on
@@ -18,7 +18,7 @@ ConVar g_config;        // Config file to load
 
 int g_players;          // Player count
 Handle g_clients;       // List of clients connected
-Handle resetTimer;           // Timer to reset the map after everyone leaves
+Handle g_timer;         // Timer to exec config everyone leaves
 
 public void OnPluginStart()
 {
@@ -72,7 +72,7 @@ public OnClientDisconnect(int client)
         if((g_players == 0))
         {
             // If you do this immediately, changing the map will run exec.
-            resetTimer = CreateTimer(2.5, ExecCfg);
+            execTimer = CreateTimer(2.5, ExecCfg);
         }
     }
 }
@@ -80,9 +80,9 @@ public OnClientDisconnect(int client)
 // Prevent running if the map is changing.
 public void OnMapEnd() {
     // Prevent errors when everyone actually does leave.
-    if (IsValidHandle(resetTimer))
+    if (IsValidHandle(execTimer))
     {
-        CloseHandle(resetTimer);
+        CloseHandle(execTimer);
     }
 }
 
