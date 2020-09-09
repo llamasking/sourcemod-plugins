@@ -4,10 +4,10 @@
 	{
 		"Version"
 		{
-			"Latest"	"0.0.0"
+			"Latest"	"0.0.1"
 		}
 
-		"Notes"	"Initial Test Release"
+		"Notes"	"Second Test Release"
 	}
 
 	"Files"
