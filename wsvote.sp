@@ -15,17 +15,21 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#pragma semicolon 1
+
 #include <sourcemod>
 #include <multicolors>
 #include <nativevotes>
 #include <SteamWorks>
 
+#define VERSION "0.0.1"
+//#define DEBUG
+
 // Updater
+#if !defined DEBUG
 #include <updater>
 #define UPDATE_URL "https://raw.githubusercontent.com/llamasking/sourcemod-plugins/master/updater/WorkshopVote/updatefile.txt"
-
-#define VERSION "0"
-//#define DEBUG
+#endif
 
 public Plugin myinfo =
 {
@@ -46,27 +50,30 @@ ConVar g_minsubs;
 public void OnPluginStart()
 {
     // ConVars
-    CreateConVar("sm_workshop_version", VERSION, "Plugin Version");
-    g_minsubs = CreateConVar("sm_workshop_min_subs", "50", "The minimum number of current subscribers for a workshop item.")
+    CreateConVar("sm_workshop_version", VERSION, "Plugin Version", FCVAR_NOTIFY);
+    g_minsubs = CreateConVar("sm_workshop_min_subs", "50", "The minimum number of current subscribers for a workshop item.");
 
     // Load config values.
     AutoExecConfig();
 
     // Fail if the game does not support a change level vote.
     if (!NativeVotes_IsVoteTypeSupported(NativeVotesType_ChgLevel))
-        SetFailState("This game does not support a change level vote! Stopping.")
+        SetFailState("This game does not support a change level vote! Stopping.");
 
     // Register commands.
     RegConsoleCmd("sm_wsmap", Command_WsVote, "Call a vote to change to a workshop map.");
     RegConsoleCmd("sm_wsvote", Command_WsVote, "Call a vote to change to a workshop map.");
 
     // Updater
+    #if !defined DEBUG
     if (LibraryExists("updater"))
     {
         Updater_AddPlugin(UPDATE_URL);
     }
+    #endif
 }
 
+#if !defined DEBUG
 public void OnLibraryAdded(const char[] name)
 {
     if (StrEqual(name, "updater"))
@@ -74,6 +81,7 @@ public void OnLibraryAdded(const char[] name)
         Updater_AddPlugin(UPDATE_URL);
     }
 }
+#endif
 
 public Action Command_WsVote(int client, int args)
 {
@@ -84,7 +92,7 @@ public Action Command_WsVote(int client, int args)
     // Get workshop id and ignore if none is given.
     if (GetCmdArg(1, g_mapid, sizeof(g_mapid)) == 0 || GetCmdArgInt(1) == 0)
     {
-        CReplyToCommand(client, "{gold}[Workshop]{default} A workshop map id is required.")
+        CReplyToCommand(client, "{gold}[Workshop]{default} A workshop map id is required.");
         return Plugin_Handled;
     }
 
@@ -95,20 +103,22 @@ public Action Command_WsVote(int client, int args)
     // Query SteamAPI.
     Handle req = SteamWorks_CreateHTTPRequest(k_EHTTPMethodPOST, "https://api.steampowered.com/ISteamRemoteStorage/GetPublishedFileDetails/v1/");
     SteamWorks_SetHTTPRequestRawPostBody(req, "application/x-www-form-urlencoded", reqBody, strlen(reqBody));
-    SteamWorks_SetHTTPRequestContextValue(req, client);
+    SteamWorks_SetHTTPRequestContextValue(req, GetClientUserId(client));
     SteamWorks_SetHTTPCallbacks(req, ReqCallback);
     SteamWorks_SendHTTPRequest(req);
 
     return Plugin_Handled;
 }
 
-public void ReqCallback(Handle req, bool failure, bool requestSuccessful, EHTTPStatusCode statusCode, any client)
+public void ReqCallback(Handle req, bool failure, bool requestSuccessful, EHTTPStatusCode statusCode, any userid)
 {
+    int client = GetClientOfUserId(userid);
+
     if (failure || !requestSuccessful || statusCode != k_EHTTPStatusCode200OK)
     {
         CReplyToCommand(client, "{gold}[Workshop]{default} A server error has occurred. Please try again later.");
         LogError("Error on request for id: '%s'", g_mapid);
-        CloseHandle(req); // See notice below.
+        delete req; // See notice below.
         return;
     }
 
@@ -116,11 +126,7 @@ public void ReqCallback(Handle req, bool failure, bool requestSuccessful, EHTTPS
     int size;
     SteamWorks_GetHTTPResponseBodySize(req, size);
     char[] data = new char[size];
-    SteamWorks_GetHTTPResponseBodyData(req, data, size)
-
-    // NOTICE: FOR THE LOVE OF ALL THINGS YOU CARE ABOUT, CLOSE THE FUCKING REQUEST HANDLE.
-    // OTHERWISE YOU WILL LEAK HANDLES SO BADLY THAT THE SERVER WILL ALOMST IMMEDIATELY CRASH.
-    CloseHandle(req);
+    SteamWorks_GetHTTPResponseBodyData(req, data, size);
 
     // Turn response into keyvalues.
     Handle kv = CreateKeyValues("response");
@@ -149,8 +155,8 @@ public void ReqCallback(Handle req, bool failure, bool requestSuccessful, EHTTPS
     // Gets a list of players that are actually in game - not spectators.
     // Based off code from nativevotes.inc
     int total;
-    int[] players = new int[GetClientCount()];
-    for (int i=1; i<=GetClientCount(); i++)
+    int[] players = new int[MaxClients];
+    for (int i=1; i<=MaxClients; i++)
     {
         if (!IsClientInGame(i) || IsFakeClient(i) || (GetClientTeam(i) < 2))
             continue;
@@ -164,6 +170,11 @@ public void ReqCallback(Handle req, bool failure, bool requestSuccessful, EHTTPS
         //NativeVotes_DisplayFail(vote, NativeVotesFail_Generic);
         return;
     }
+
+    // NOTICE: FOR THE LOVE OF ALL THINGS YOU CARE ABOUT, DELETE HANDLES.
+    // OTHERWISE IT WILL LEAK SO BADLY THAT THE SERVER WILL ALMOST IMMEDIATELY CRASH.
+    delete req;
+    delete kv;
 }
 
 public int Nv_Vote(Handle vote, MenuAction action, int param1, int param2)
@@ -178,7 +189,7 @@ public int Nv_Vote(Handle vote, MenuAction action, int param1, int param2)
                 NativeVotes_DisplayPass(vote, g_mapname);
 
                 CPrintToChatAll("{gold}[Workshop]{default} Vote passed. Map will change to '%s' in a few seconds.", g_mapname);
-                #if defined DEBUG
+                #if !defined DEBUG
                 CreateTimer(10.0, ChangeLevel);
                 #endif
             }
