@@ -1,7 +1,8 @@
+#pragma semicolon 1
 #include <sourcemod>
 
 #define MAX_ID_STRING 6
-#define VERSION "1.7.1"
+#define VERSION "1.7.2"
 //#define DEBUG
 
 public Plugin myinfo =
@@ -25,7 +26,7 @@ public void OnPluginStart()
     // Create ConVars
     g_enabled = CreateConVar("sm_empty_enabled", "1", "Whether or not the plugin is enabled.", FCVAR_PROTECTED, true, 0.0, true, 1.0);
     g_config  = CreateConVar("sm_empty_config", "", "The config to run when the server emptys.", FCVAR_PROTECTED);
-    CreateConVar("sm_empty_version", VERSION, "Plugin version.", FCVAR_DONTRECORD);
+    CreateConVar("sm_empty_version", VERSION, "Plugin version.", FCVAR_NOTIFY);
 
     // Create table of IDs
     g_clients = CreateTrie();
@@ -72,7 +73,7 @@ public OnClientDisconnect(int client)
         if((g_players == 0))
         {
             // If you do this immediately, changing the map will run exec.
-            execTimer = CreateTimer(2.5, ExecCfg);
+            g_timer = CreateTimer(2.5, ExecCfg);
         }
     }
 }
@@ -80,9 +81,10 @@ public OnClientDisconnect(int client)
 // Prevent running if the map is changing.
 public void OnMapEnd() {
     // Prevent errors when everyone actually does leave.
-    if (IsValidHandle(execTimer))
+    // IsValidHandle is deprecated but idk a good alternative.
+    if (IsValidHandle(g_timer))
     {
-        CloseHandle(execTimer);
+        CloseHandle(g_timer);
     }
 }
 

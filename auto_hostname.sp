@@ -1,6 +1,24 @@
+/*
+    Auto Hostname
+    Copyright (C) 2020 - llamasking
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, as per version 3 of the license.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
+#pragma semicolon 1
 #include <sourcemod>
 
-#define VERSION "1.1"
+#define VERSION "1.1.1"
 
 public Plugin myinfo =
 {
@@ -8,7 +26,7 @@ public Plugin myinfo =
     author = "llamasking",
     description = "Automatically generates the server's hostname after each map change.",
     version = VERSION,
-    url = "none"
+    url = "https://github.com/llamasking/sourcemod-plugins"
 }
 
 ConVar g_enabled;
@@ -21,7 +39,7 @@ public void OnPluginStart()
     g_enabled = CreateConVar("sm_hostname_enabled", "1", "Whether or not the plugin is enabled.", FCVAR_PROTECTED, true, 0.0, true, 1.0);
     g_prefix  = CreateConVar("sm_hostname_prefix", "", "Everything before the map in the hostname.", FCVAR_PROTECTED);
     g_suffix  = CreateConVar("sm_hostname_suffix", "", "Everything after the map in the hostname.", FCVAR_PROTECTED);
-    CreateConVar("sm_hostname_version", VERSION, "Plugin version.", FCVAR_DONTRECORD);
+    CreateConVar("sm_hostname_version", VERSION, "Plugin version.", FCVAR_NOTIFY);
 
     // Auto-generate config file if it's not there
     AutoExecConfig(true, "auto_hostname.cfg");
@@ -31,15 +49,15 @@ public void OnPluginStart()
     HookConVarChange(g_suffix, OnConVarChange);
 }
 
-public OnConVarChange(ConVar convar, const char[] oldValue, const char[] newValue)
+public void OnConVarChange(ConVar convar, const char[] oldValue, const char[] newValue)
 {
-    // Wait a little bit before updating the hostname. That way other configs can make their changes to the name.
+    // Wait a little bit before updating the hostname. That way other configs can make their changes to the convars.
     CreateTimer(0.5, UpdateHostname);
 }
 
-public void OnMapStart()
+public void OnConfigsExecuted()
 {
-    // Wait a little bit before updating the hostname. That way other configs can make their changes to the name.
+    // Because copy paste.
     CreateTimer(0.5, UpdateHostname);
 }
 
