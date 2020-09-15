@@ -22,20 +22,20 @@
 #include <nativevotes>
 #include <SteamWorks>
 
-#define VERSION "0.0.1"
 //#define DEBUG
-
-// Updater
-#if !defined DEBUG
-#include <updater>
+#define VERSION "1.0.0"
 #define UPDATE_URL "https://raw.githubusercontent.com/llamasking/sourcemod-plugins/master/updater/WorkshopVote/updatefile.txt"
+
+#if !defined DEBUG
+#undef REQUIRE_PLUGIN
+#include <updater>
 #endif
 
 public Plugin myinfo =
 {
     name = "Workshop Map Vote",
     author = "llamasking",
-    description = "Vote to change to workshop maps.",
+    description = "Allows players to call votes to change to workshop maps.",
     version = VERSION,
     url = "https://github.com/llamasking/sourcemod-plugins"
 }
@@ -49,6 +49,20 @@ ConVar g_minsubs;
 
 public void OnPluginStart()
 {
+    char game[16];
+    GetGameFolderName(game, sizeof(game));
+
+    // Throw error if running any game other than tf2.
+    if (!StrEqual(game, "tf"))
+        SetFailState("This game is not supported! Stopping.");
+
+    // Fail if the game does not support a change level vote.
+    // Useful if I add support for other games in the future.
+    /*
+    if (!NativeVotes_IsVoteTypeSupported(NativeVotesType_ChgLevel))
+        SetFailState("This game does not support a change level vote! Stopping.");
+    */
+
     // ConVars
     CreateConVar("sm_workshop_version", VERSION, "Plugin Version", FCVAR_NOTIFY);
     g_minsubs = CreateConVar("sm_workshop_min_subs", "50", "The minimum number of current subscribers for a workshop item.");
@@ -56,24 +70,17 @@ public void OnPluginStart()
     // Load config values.
     AutoExecConfig();
 
-    // Fail if the game does not support a change level vote.
-    if (!NativeVotes_IsVoteTypeSupported(NativeVotesType_ChgLevel))
-        SetFailState("This game does not support a change level vote! Stopping.");
-
     // Register commands.
     RegConsoleCmd("sm_wsmap", Command_WsVote, "Call a vote to change to a workshop map.");
     RegConsoleCmd("sm_wsvote", Command_WsVote, "Call a vote to change to a workshop map.");
 
     // Updater
-    #if !defined DEBUG
     if (LibraryExists("updater"))
     {
         Updater_AddPlugin(UPDATE_URL);
     }
-    #endif
 }
 
-#if !defined DEBUG
 public void OnLibraryAdded(const char[] name)
 {
     if (StrEqual(name, "updater"))
@@ -81,13 +88,15 @@ public void OnLibraryAdded(const char[] name)
         Updater_AddPlugin(UPDATE_URL);
     }
 }
-#endif
 
 public Action Command_WsVote(int client, int args)
 {
     // Ignore console/rcon and spectators.
     if (client == 0 || GetClientTeam(client) < 2)
+    {
+        CReplyToCommand(client, "{gold}[Workshop]{default} Spectators may not call votes.");
         return Plugin_Handled;
+    }
 
     // Get workshop id and ignore if none is given.
     if (GetCmdArg(1, g_mapid, sizeof(g_mapid)) == 0 || GetCmdArgInt(1) == 0)
@@ -116,7 +125,7 @@ public void ReqCallback(Handle req, bool failure, bool requestSuccessful, EHTTPS
 
     if (failure || !requestSuccessful || statusCode != k_EHTTPStatusCode200OK)
     {
-        CReplyToCommand(client, "{gold}[Workshop]{default} A server error has occurred. Please try again later.");
+        CPrintToChat(client, "{gold}[Workshop]{default} A server error has occurred. Please try again later.");
         LogError("Error on request for id: '%s'", g_mapid);
         delete req; // See notice below.
         return;
@@ -136,11 +145,11 @@ public void ReqCallback(Handle req, bool failure, bool requestSuccessful, EHTTPS
     KvJumpToKey(kv, "publishedfiledetails");
     KvJumpToKey(kv, "0");
 
-    // Verify the item is actually for TF2.
+    // Verify the item is actually for TF2 and has enough subscribers.
     // Also accidentally verifies that the id is actually a map since apparently only maps can have subscriptions.
     if (KvGetNum(kv, "consumer_app_id") != 440 || KvGetNum(kv, "subscriptions") < GetConVarInt(g_minsubs))
     {
-        CReplyToCommand(client, "{gold}[Workshop]{default} That id is invalid.");
+        CPrintToChat(client, "{gold}[Workshop]{default} The given id is invalid or does not have enough subscribers.");
         return;
     }
 
@@ -166,7 +175,7 @@ public void ReqCallback(Handle req, bool failure, bool requestSuccessful, EHTTPS
     // Display vote or error if a vote is in progress.
     if (!NativeVotes_Display(vote, players, total, 20, VOTEFLAG_NO_REVOTES))
     {
-        CReplyToCommand(client, "{gold}[Workshop]{default} A vote is already in progress.");
+        CPrintToChat(client, "{gold}[Workshop]{default} A vote is already in progress.");
         //NativeVotes_DisplayFail(vote, NativeVotesFail_Generic);
         return;
     }

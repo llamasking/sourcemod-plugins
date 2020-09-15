@@ -4,10 +4,14 @@
 	{
 		"Version"
 		{
-			"Latest"	"0.0.1"
+			"Latest"	"1.0.0"
 		}
 
-		"Notes"	"Second Test Release"
+		"Notes"	"Initial AlliedMods Release"
+		"Notes"	"Updater is now optional"
+		"Notes"	"Will now throw errors if used on anything other than TF2."
+		"Notes"	"Workaround for errors not sending to chat."
+		"Notes"	"Change some wording."
 	}
 
 	"Files"
