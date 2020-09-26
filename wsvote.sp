@@ -22,8 +22,8 @@
 #include <nativevotes>
 #include <SteamWorks>
 
-//#define DEBUG
-#define VERSION "1.0.0"
+#define DEBUG
+#define VERSION "1.0.1"
 #define UPDATE_URL "https://raw.githubusercontent.com/llamasking/sourcemod-plugins/master/updater/WorkshopVote/updatefile.txt"
 
 #if !defined DEBUG
@@ -64,7 +64,7 @@ public void OnPluginStart()
     */
 
     // ConVars
-    CreateConVar("sm_workshop_version", VERSION, "Plugin Version", FCVAR_NOTIFY);
+    CreateConVar("sm_workshop_version", VERSION, "Plugin Version", FCVAR_DONTRECORD | FCVAR_NOTIFY);
     g_minsubs = CreateConVar("sm_workshop_min_subs", "50", "The minimum number of current subscribers for a workshop item.");
 
     // Load config values.
@@ -75,12 +75,15 @@ public void OnPluginStart()
     RegConsoleCmd("sm_wsvote", Command_WsVote, "Call a vote to change to a workshop map.");
 
     // Updater
+    #if !defined DEBUG
     if (LibraryExists("updater"))
     {
         Updater_AddPlugin(UPDATE_URL);
     }
+    #endif
 }
 
+#if !defined DEBUG
 public void OnLibraryAdded(const char[] name)
 {
     if (StrEqual(name, "updater"))
@@ -88,6 +91,7 @@ public void OnLibraryAdded(const char[] name)
         Updater_AddPlugin(UPDATE_URL);
     }
 }
+#endif
 
 public Action Command_WsVote(int client, int args)
 {
@@ -180,6 +184,8 @@ public void ReqCallback(Handle req, bool failure, bool requestSuccessful, EHTTPS
         return;
     }
 
+    PrintHintText(client, "If the server does not load the map, please try again. It simply failed to download it.");
+
     // NOTICE: FOR THE LOVE OF ALL THINGS YOU CARE ABOUT, DELETE HANDLES.
     // OTHERWISE IT WILL LEAK SO BADLY THAT THE SERVER WILL ALMOST IMMEDIATELY CRASH.
     delete req;
@@ -197,7 +203,7 @@ public int Nv_Vote(Handle vote, MenuAction action, int param1, int param2)
             {
                 NativeVotes_DisplayPass(vote, g_mapname);
 
-                CPrintToChatAll("{gold}[Workshop]{default} Vote passed. Map will change to '%s' in a few seconds.", g_mapname);
+                CPrintToChatAll("{gold}[Workshop]{default} Vote passed. Map will change to '%s' in 10 seconds.", g_mapname);
                 #if !defined DEBUG
                 CreateTimer(10.0, ChangeLevel);
                 #endif
@@ -229,7 +235,5 @@ public int Nv_Vote(Handle vote, MenuAction action, int param1, int param2)
 
 public Action ChangeLevel(Handle timer)
 {
-    char mapid[32];
-    Format(mapid, sizeof(mapid), "workshop/%s", g_mapid);
-    ForceChangeLevel(mapid, "[Workshop] Changed level by vote.");
+    ServerCommand("changelevel workshop/%s", g_mapid);
 }
