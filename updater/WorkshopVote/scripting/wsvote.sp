@@ -22,8 +22,8 @@
 #include <nativevotes>
 #include <SteamWorks>
 
-#define DEBUG
-#define VERSION "1.0.1"
+//#define DEBUG
+#define VERSION "1.0.2"
 #define UPDATE_URL "https://raw.githubusercontent.com/llamasking/sourcemod-plugins/master/updater/WorkshopVote/updatefile.txt"
 
 #if !defined DEBUG
@@ -103,7 +103,7 @@ public Action Command_WsVote(int client, int args)
     }
 
     // Get workshop id and ignore if none is given.
-    if (GetCmdArg(1, g_mapid, sizeof(g_mapid)) == 0 || GetCmdArgInt(1) == 0)
+    if (GetCmdArg(1, g_mapid, sizeof(g_mapid)) == 0)
     {
         CReplyToCommand(client, "{gold}[Workshop]{default} A workshop map id is required.");
         return Plugin_Handled;

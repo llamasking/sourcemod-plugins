@@ -4,13 +4,10 @@
 	{
 		"Version"
 		{
-			"Latest"	"1.0.1"
+			"Latest"	"1.0.2"
 		}
 
-		"Notes"	"Fix compilation errors if debug is defined"
-		"Notes"	"Add notice to vote caller about possible issues"
-		"Notes"	"Say '10' rather than 'a few' seconds."
-		"Notes"	"Just use the changelevel command."
+		"Notes"	"Oh, shit! Debug mode was on!"
 	}
 
 	"Files"
