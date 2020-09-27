@@ -4,11 +4,10 @@
 	{
 		"Version"
 		{
-			"Latest"	"1.0.3"
+			"Latest"	"1.0.4"
 		}
 
-		"Notes"	"Add notice if debug mode is on."
-		"Notes"	"Fix possible leak if a vote is called while another is as well."
+		"Notes"	"Fix more leaks. In this case, if an ID is invalid or doesn't have enough subscribers."
 	}
 
 	"Files"

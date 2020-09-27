@@ -23,7 +23,7 @@
 #include <SteamWorks>
 
 //#define DEBUG
-#define VERSION "1.0.3"
+#define VERSION "1.0.4"
 #define UPDATE_URL "https://raw.githubusercontent.com/llamasking/sourcemod-plugins/master/updater/WorkshopVote/updatefile.txt"
 
 #if !defined DEBUG
@@ -158,6 +158,11 @@ public void ReqCallback(Handle req, bool failure, bool requestSuccessful, EHTTPS
     if (KvGetNum(kv, "consumer_app_id") != 440 || KvGetNum(kv, "subscriptions") < GetConVarInt(g_minsubs))
     {
         CPrintToChat(client, "{gold}[Workshop]{default} The given id is invalid or does not have enough subscribers.");
+
+        // See notice below
+        delete req;
+        delete kv;
+
         return;
     }
 
