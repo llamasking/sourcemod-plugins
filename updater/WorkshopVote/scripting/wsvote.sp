@@ -23,7 +23,7 @@
 #include <SteamWorks>
 
 //#define DEBUG
-#define VERSION "1.0.2"
+#define VERSION "1.0.3"
 #define UPDATE_URL "https://raw.githubusercontent.com/llamasking/sourcemod-plugins/master/updater/WorkshopVote/updatefile.txt"
 
 #if !defined DEBUG
@@ -95,6 +95,10 @@ public void OnLibraryAdded(const char[] name)
 
 public Action Command_WsVote(int client, int args)
 {
+    #if defined DEBUG
+    CReplyToCommand(client, "{fullred}[Debug]{default} Debug mode is on! If this is not expected, please contact the server admin.");
+    #endif
+
     // Ignore console/rcon and spectators.
     if (client == 0 || GetClientTeam(client) < 2)
     {
@@ -181,10 +185,11 @@ public void ReqCallback(Handle req, bool failure, bool requestSuccessful, EHTTPS
     {
         CPrintToChat(client, "{gold}[Workshop]{default} A vote is already in progress.");
         //NativeVotes_DisplayFail(vote, NativeVotesFail_Generic);
-        return;
     }
-
-    PrintHintText(client, "If the server does not load the map, please try again. It simply failed to download it.");
+    else
+    {
+        PrintHintText(client, "If the server does not load the map, please try again. It simply failed to download it.");
+    }
 
     // NOTICE: FOR THE LOVE OF ALL THINGS YOU CARE ABOUT, DELETE HANDLES.
     // OTHERWISE IT WILL LEAK SO BADLY THAT THE SERVER WILL ALMOST IMMEDIATELY CRASH.
