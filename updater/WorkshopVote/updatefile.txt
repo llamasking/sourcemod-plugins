@@ -4,10 +4,10 @@
 	{
 		"Version"
 		{
-			"Latest"	"1.0.4"
+			"Latest"	"1.0.5"
 		}
 
-		"Notes"	"Fix more leaks. In this case, if an ID is invalid or doesn't have enough subscribers."
+		"Notes"	"Attempt to download map in period between vote passing and map changing."
 	}
 
 	"Files"

@@ -211,6 +211,9 @@ public int Nv_Vote(Handle vote, MenuAction action, int param1, int param2)
         {
             if (param1 == NATIVEVOTES_VOTE_YES)
             {
+                // Attempt to download map ahead of time.
+                ServerCommand("tf_workshop_map_sync %s", g_mapid);
+
                 NativeVotes_DisplayPass(vote, g_mapname);
 
                 CPrintToChatAll("{gold}[Workshop]{default} Vote passed. Map will change to '%s' in 10 seconds.", g_mapname);
