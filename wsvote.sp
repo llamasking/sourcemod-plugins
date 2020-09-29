@@ -23,7 +23,7 @@
 #include <SteamWorks>
 
 //#define DEBUG
-#define VERSION "1.0.4"
+#define VERSION "1.0.5"
 #define UPDATE_URL "https://raw.githubusercontent.com/llamasking/sourcemod-plugins/master/updater/WorkshopVote/updatefile.txt"
 
 #if !defined DEBUG
