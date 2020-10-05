@@ -178,7 +178,7 @@ public void ReqCallback(Handle req, bool failure, bool requestSuccessful, EHTTPS
     // Based off code from nativevotes.inc
     int total;
     int[] players = new int[MaxClients];
-    for (int i=1; i<=MaxClients; i++)
+    for (int i = 1; i <= MaxClients; i++)
     {
         if (!IsClientInGame(i) || IsFakeClient(i) || (GetClientTeam(i) < 2))
             continue;
