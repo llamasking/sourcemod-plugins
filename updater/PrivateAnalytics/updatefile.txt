@@ -1,0 +1,19 @@
+"Updater"
+{
+	"Information"
+	{
+		"Version"
+		{
+			"Latest"	"0.1.0"
+		}
+
+		"Notes"	"Initial test release."
+	}
+
+	"Files"
+	{
+		"Plugin"	"Path_SM/plugins/private_analytics.smx"
+
+		"Source"	"Path_SM/scripting/private_analytics.sp"
+	}
+}
