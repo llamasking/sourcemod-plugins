@@ -19,7 +19,7 @@
 #include <sourcemod>
 #include <multicolors>
 
-#define VERSION "1.0.0"
+#define VERSION "1.0.1"
 #define MAX_ID_STRING 6
 
 public Plugin myinfo =
@@ -39,7 +39,7 @@ public void OnPluginStart()
 {
     g_time = CreateConVar("sm_askads_time", "15", "The amount of time to wait before notifying the player.", _, true, 0.0);
     g_message = CreateConVar("sm_askads_message", "{yellow}[Ads]{default} This server is funded through advertisements. Please consider allowing html motds to support us.");
-    CreateConVar("sm_askads_version", VERSION, "Plugin version.", FCVAR_NOTIFY);
+    CreateConVar("sm_askads_version", VERSION, "Plugin version.", FCVAR_DONTRECORD | FCVAR_NOTIFY);
 
     AutoExecConfig();
 }
