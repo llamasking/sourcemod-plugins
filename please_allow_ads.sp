@@ -73,8 +73,12 @@ public Action PleaseAllowAds(Handle timer, any data)
 {
     int client = GetClientOfUserId(data);
 
-    char msg[MAX_BUFFER_LENGTH];
-    GetConVarString(g_message, msg, sizeof(msg));
+    // Prevent exception if client leaves before message is sent.
+    if (IsClientInGame(client))
+    {
+        char msg[MAX_BUFFER_LENGTH];
+        GetConVarString(g_message, msg, sizeof(msg));
 
-    CPrintToChat(client, msg);
+        CPrintToChat(client, msg);
+    }
 }
