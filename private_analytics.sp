@@ -39,8 +39,8 @@ When a player BOTH joins AND leaves, player_count is updated with the following.
 #undef REQUIRE_PLUGIN
 #include <updater>
 
-#define VERSION "0.2.0"
-#define DEBUG
+#define VERSION "0.2.1"
+//#define DEBUG
 #define UPDATE_URL "https://raw.githubusercontent.com/llamasking/sourcemod-plugins/master/updater/PrivateAnalytics/updatefile.txt"
 
 public Plugin myinfo =

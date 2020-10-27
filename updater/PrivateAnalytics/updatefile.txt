@@ -4,11 +4,10 @@
 	{
 		"Version"
 		{
-			"Latest"	"0.2.0"
+			"Latest"	"0.2.1"
 		}
 
-		"Notes"	"Allow logging of html motd status."
-		"Notes" "General code restructuring"
+		"Notes"	"Shit, debug mode was on."
 	}
 
 	"Files"
