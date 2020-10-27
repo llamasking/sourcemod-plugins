@@ -1,5 +1,5 @@
 /*
-    Private Analytics -
+    Private Analytics
     Copyright (C) 2020 - llamasking
 
     This program is free software: you can redistribute it and/or modify
@@ -22,6 +22,7 @@ When a player joins, player_analytics is updated with the following.
 - Player Count
 - Map
 - Country
+- If HTML Motds are blocked (off by default)
 
 When a player BOTH joins AND leaves, player_count is updated with the following.
 - Server IP
@@ -38,18 +39,21 @@ When a player BOTH joins AND leaves, player_count is updated with the following.
 #undef REQUIRE_PLUGIN
 #include <updater>
 
-#define VERSION "0.1.0"
-//#define DEBUG
+#define VERSION "0.2.0"
+#define DEBUG
 #define UPDATE_URL "https://raw.githubusercontent.com/llamasking/sourcemod-plugins/master/updater/PrivateAnalytics/updatefile.txt"
 
 public Plugin myinfo =
 {
     name = "Private Analytics",
     author = "llamasking",
-    description = "An alternative to Dr. McKay's Player Analytics that does not log identifiable information.",
+    description = "An alternative to Dr. McKay's Player Analytics that logs much less identifiable information.",
     version = VERSION,
     url = "https://github.com/llamasking/sourcemod-plugins"
 }
+
+/* ConVars */
+ConVar g_html;
 
 /* Database */
 Database g_db = null;
@@ -60,7 +64,10 @@ char g_ip[32];
 public void OnPluginStart()
 {
     // ConVars
-    CreateConVar("sm_analytics_version", VERSION, "Plugin version.", FCVAR_NOTIFY);
+    g_html = CreateConVar("sm_analytics_html", "0", "Whether or not the plugin logs if HTML motds are on or off.", _, true, 0.0, true, 1.0);
+    CreateConVar("sm_analytics_version", VERSION, "Plugin version.", FCVAR_NOTIFY | FCVAR_DONTRECORD);
+
+    AutoExecConfig();
 
     if(!SQL_CheckConfig("priv_analytics"))
         SetFailState("Database 'priv_analytics' not found in databases.cfg!");
@@ -73,13 +80,16 @@ public void OnPluginStart()
     Database.Connect(ConnectCallback, "priv_analytics");
 
     // Updater
+    #if !defined DEBUG
     if (LibraryExists("updater"))
     {
         Updater_AddPlugin(UPDATE_URL);
     }
+    #endif
 }
 
-// Updater
+/* Updater */
+#if !defined DEBUG
 public OnLibraryAdded(const String:name[])
 {
     if (StrEqual(name, "updater"))
@@ -87,25 +97,29 @@ public OnLibraryAdded(const String:name[])
         Updater_AddPlugin(UPDATE_URL);
     }
 }
+#endif
 
-// Initial database connection
-public void ConnectCallback(Database db, const char[] error, any data)
+/* Connect and Disconnect */
+public void OnClientPutInServer(int client)
 {
-    if(db == null)
+    if(GetConVarBool(g_html))
     {
-        LogError("Could not connect to database: %s", error);
+        QueryClientConVar(client, "cl_disablehtmlmotd", QueryCallback);
+
     }
     else
     {
-        g_db = db;
-
-        // Create table if it doesn't already exist.
-        g_db.Query(SQLCallback, "CREATE TABLE IF NOT EXISTS `player_analytics` (`id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,`server_ip` varchar(32) NOT NULL,`connect_time` int NOT NULL,`numplayers` tinyint NOT NULL,`map` varchar(64) NOT NULL,`country` varchar(45) NULL,`country_code` varchar(2) NULL,`country_code3` varchar(3) NULL);");
-        g_db.Query(SQLCallback, "CREATE TABLE IF NOT EXISTS `player_count` (`id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,`server_ip` varchar(32) NOT NULL,`time` int NOT NULL,`numplayers` tinyint NOT NULL,`map` varchar(64) NOT NULL);");
+        InsertConnection(client, "NULL");
     }
 }
 
-public void OnClientConnected(int client)
+public void OnClientDisconnect(int client)
+{
+    UpdatePlayerCount(true);
+}
+
+/* Functions */
+public void InsertConnection(int client, const char[] htmlStatus)
 {
     // Ignore fake clients, but only when they're connecting.
     if(IsFakeClient(client))
@@ -138,21 +152,17 @@ public void OnClientConnected(int client)
 
     // Query
     char query[512];
-    Format(query, sizeof(query), "INSERT INTO `player_analytics` SET server_ip = '%s', connect_time = %s, numplayers = %s, map = '%s', country = '%s', country_code = '%s', country_code3 = '%s';",
-        g_ip, time, player_count, map, country, country_code, country_code3);
-    g_db.Query(SQLCallback, query);
+    Format(query, sizeof(query), "INSERT INTO `player_analytics` SET server_ip = '%s', connect_time = %s, numplayers = %s, map = '%s', country = '%s', country_code = '%s', country_code3 = '%s', html_motd_disabled = %s;",
+        g_ip, time, player_count, map, country, country_code, country_code3, htmlStatus);
 
     #if defined DEBUG
-    LogMessage("Query: %s", query);
+    LogMessage("%s", query);
+    #else
+    g_db.Query(SQLCallback, query);
     #endif
 
     // Update player count table as well.
     UpdatePlayerCount(false);
-}
-
-public void OnClientDisconnect(int client)
-{
-    UpdatePlayerCount(true);
 }
 
 public void UpdatePlayerCount(bool isDisconnecting)
@@ -185,14 +195,13 @@ public void UpdatePlayerCount(bool isDisconnecting)
     char query[512];
     Format(query, sizeof(query), "INSERT INTO `player_count` SET server_ip = '%s', time = %s, numplayers = %s, map = '%s';",
         g_ip, time, player_count, map);
-    g_db.Query(SQLCallback, query);
-
     #if defined DEBUG
-    LogMessage("Query: %s", query);
+    LogMessage("%s", query);
+    #else
+    g_db.Query(SQLCallback, query);
     #endif
 }
 
-// Returns the number of players in game.
 public int GetPlayerCount() {
     int players = 0;
 
@@ -205,6 +214,36 @@ public int GetPlayerCount() {
     return players;
 }
 
+/* Callbacks */
+public void ConnectCallback(Database db, const char[] error, any data)
+{
+    if(db == null)
+    {
+        LogError("Could not connect to database: %s", error);
+    }
+    else
+    {
+        g_db = db;
+
+        // Create table if it doesn't already exist.
+        g_db.Query(SQLCallback, "CREATE TABLE IF NOT EXISTS `player_analytics` (`id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,`server_ip` varchar(32) NOT NULL,`connect_time` int NOT NULL,`numplayers` tinyint NOT NULL,`map` varchar(64) NOT NULL,`country` varchar(45) NULL,`country_code` varchar(2) NULL,`country_code3` varchar(3) NULL,`html_motd_disabled` tinyint(1) NULL);");
+        g_db.Query(SQLCallback, "CREATE TABLE IF NOT EXISTS `player_count` (`id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,`server_ip` varchar(32) NOT NULL,`time` int NOT NULL,`numplayers` tinyint NOT NULL,`map` varchar(64) NOT NULL);");
+    }
+}
+
 public void SQLCallback(Database db, DBResultSet results, const char[] error, any data)
 {
+}
+
+public void QueryCallback(QueryCookie cookie, int client, ConVarQueryResult result, const char[] cvarName, const char[] cvarValue)
+{
+    // If query failed, send NULL
+    if(result == ConVarQuery_Okay)
+    {
+        InsertConnection(client, cvarValue);
+    }
+    else
+    {
+        InsertConnection(client, "NULL");
+    }
 }
