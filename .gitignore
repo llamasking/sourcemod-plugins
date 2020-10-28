@@ -1,6 +1,3 @@
-# Visual Studio: Code
-.vscode
-
 # Compiler
 include/
 compile.sh

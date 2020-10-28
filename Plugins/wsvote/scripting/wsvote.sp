@@ -23,8 +23,8 @@
 #include <SteamWorks>
 
 //#define DEBUG
-#define VERSION "1.0.5"
-#define UPDATE_URL "https://raw.githubusercontent.com/llamasking/sourcemod-plugins/master/updater/WorkshopVote/updatefile.txt"
+#define VERSION "1.0.6"
+#define UPDATE_URL "https://raw.githubusercontent.com/llamasking/sourcemod-plugins/master/Plugins/wsvote/updatefile.txt"
 
 #if !defined DEBUG
 #undef REQUIRE_PLUGIN
@@ -178,7 +178,7 @@ public void ReqCallback(Handle req, bool failure, bool requestSuccessful, EHTTPS
     // Based off code from nativevotes.inc
     int total;
     int[] players = new int[MaxClients];
-    for (int i = 1; i <= MaxClients; i++)
+    for (int i=1; i<=MaxClients; i++)
     {
         if (!IsClientInGame(i) || IsFakeClient(i) || (GetClientTeam(i) < 2))
             continue;
