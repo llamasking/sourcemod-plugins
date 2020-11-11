@@ -105,7 +105,6 @@ public void OnClientPutInServer(int client)
     if(GetConVarBool(g_html))
     {
         QueryClientConVar(client, "cl_disablehtmlmotd", QueryCallback);
-
     }
     else
     {

@@ -23,7 +23,7 @@
 #include <SteamWorks>
 
 //#define DEBUG
-#define VERSION "1.0.6"
+#define VERSION "1.1.0"
 #define UPDATE_URL "https://raw.githubusercontent.com/llamasking/sourcemod-plugins/master/Plugins/wsvote/updatefile.txt"
 
 #if !defined DEBUG
@@ -46,6 +46,14 @@ char g_mapname[64];
 
 /* ConVars */
 ConVar g_minsubs;
+ConVar g_delay;
+ConVar g_notify;
+ConVar g_notifydelay;
+
+/* Current Map Info */
+char g_cmap_name[64];
+char g_cmap_id[64];
+bool g_cmap_stock;
 
 public void OnPluginStart()
 {
@@ -66,6 +74,9 @@ public void OnPluginStart()
     // ConVars
     CreateConVar("sm_workshop_version", VERSION, "Plugin Version", FCVAR_DONTRECORD | FCVAR_NOTIFY);
     g_minsubs = CreateConVar("sm_workshop_min_subs", "50", "The minimum number of current subscribers for a workshop item.");
+    g_delay   = CreateConVar("sm_workshop_delay", "10", "The delay between the vote passing and the map changing.", _, true, 0.0);
+    g_notify  = CreateConVar("sm_workshop_notify", "1", "Whether or not to notify joining players about the map's creator.'", _, true, 0.0, true, 1.0);
+    g_notifydelay = CreateConVar("sm_workshop_notify_delay", "60", "How long to wait after a client joins before notifying them.'", _, true, 0.0);
 
     // Load config values.
     AutoExecConfig();
@@ -73,6 +84,8 @@ public void OnPluginStart()
     // Register commands.
     RegConsoleCmd("sm_wsmap", Command_WsVote, "Call a vote to change to a workshop map.");
     RegConsoleCmd("sm_wsvote", Command_WsVote, "Call a vote to change to a workshop map.");
+    RegConsoleCmd("sm_cmap", Command_CurrentMap, "Shows information about the current map.");
+    RegConsoleCmd("sm_currentmap", Command_CurrentMap, "Shows information about the current map.");
 
     // Updater
     #if !defined DEBUG
@@ -93,10 +106,127 @@ public void OnLibraryAdded(const char[] name)
 }
 #endif
 
+// Current Map Functionality
+public void OnMapStart()
+{
+    #if defined DEBUG
+    LogMessage("---- Update Map");
+    #endif
+
+    char cmap_name[64];
+    GetCurrentMap(cmap_name, sizeof(cmap_name));
+
+    if(StrContains(cmap_name, ".ugc") != -1)
+    {
+        #if defined DEBUG
+        LogMessage("---- Workshop Map");
+        #endif
+
+        g_cmap_stock = false;
+
+        // Get map ID out of it's name
+        char buffers[2][64];
+        ExplodeString(cmap_name, ".ugc", buffers, 2, 64);
+        strcopy(g_cmap_id, sizeof(g_cmap_id), buffers[1]);
+
+        // Query SteamAPI for more information.
+        // Format body of request.
+        char reqBody[64];
+        Format(reqBody, sizeof(reqBody), "itemcount=1&publishedfileids[0]=%s&format=vdf", buffers[1]);
+
+        // Query SteamAPI.
+        Handle req = SteamWorks_CreateHTTPRequest(k_EHTTPMethodPOST, "https://api.steampowered.com/ISteamRemoteStorage/GetPublishedFileDetails/v1/");
+        SteamWorks_SetHTTPRequestRawPostBody(req, "application/x-www-form-urlencoded", reqBody, strlen(reqBody));
+        SteamWorks_SetHTTPCallbacks(req, UpdateCurrentMapCallback);
+        SteamWorks_SendHTTPRequest(req);
+    }
+    else
+    {
+        #if defined DEBUG
+        LogMessage("---- Stock Map");
+        #endif
+
+        g_cmap_stock = true;
+        strcopy(g_cmap_name, sizeof(g_cmap_name), cmap_name);
+    }
+}
+
+public void UpdateCurrentMapCallback(Handle req, bool failure, bool requestSuccessful, EHTTPStatusCode statusCode)
+{
+    #if defined DEBUG
+    LogMessage("---- Map Callback");
+    #endif
+
+    if (failure || !requestSuccessful || statusCode != k_EHTTPStatusCode200OK)
+    {
+        strcopy(g_cmap_name, sizeof(g_cmap_name), "Error");
+
+        LogError("Error updating current map info!");
+        delete req; // See notice below.
+        return;
+    }
+
+    // Read response.
+    int size;
+    SteamWorks_GetHTTPResponseBodySize(req, size);
+    char[] data = new char[size];
+    SteamWorks_GetHTTPResponseBodyData(req, data, size);
+
+    // Turn response into keyvalues.
+    Handle kv = CreateKeyValues("response");
+    StringToKeyValues(kv, data);
+
+    // Move into item's subkey.
+    KvJumpToKey(kv, "publishedfiledetails");
+    KvJumpToKey(kv, "0");
+
+    // Get map name!
+    KvGetString(kv, "title", g_cmap_name, sizeof(g_cmap_name));
+
+    // NOTICE: FOR THE LOVE OF ALL THINGS YOU CARE ABOUT, DELETE HANDLES.
+    // OTHERWISE IT WILL LEAK SO BADLY THAT THE SERVER WILL ALMOST IMMEDIATELY CRASH.
+    delete req;
+    delete kv;
+}
+
+// Notify Functionality
+public void OnClientPutInServer(int client)
+{
+    if(GetConVarBool(g_notify) && !IsFakeClient(client))
+        CreateTimer(GetConVarFloat(g_notifydelay), Timer_NotifyPlayer, GetClientUserId(client));
+}
+
+public Action Timer_NotifyPlayer(Handle timer, any userid)
+{
+    #if defined DEBUG
+    LogMessage("---- Notify Timer");
+    #endif
+    int client = GetClientOfUserId(userid);
+
+    // Ignore if the player left and all that good shit
+    if(!g_cmap_stock && IsClientInGame(client))
+        CPrintToChat(client, "{gold}[Workshop]{default} The current map is titled \"%s\" on the Workshop and its ID is %s.", g_cmap_name, g_cmap_id);
+}
+
+// Current Map Command
+public Action Command_CurrentMap(int client, int args)
+{
+    if(g_cmap_stock)
+    {
+        CPrintToChat(client, "{gold}[Workshop]{default} The current map is \"%s\" and it's an official map.", g_cmap_name);
+    }
+    else
+    {
+        CPrintToChat(client, "{gold}[Workshop]{default} The current map is titled \"%s\" on the Workshop and its ID is %s.", g_cmap_name, g_cmap_id);
+    }
+    return Plugin_Handled;
+}
+
+// WsVote / WsMap Command
 public Action Command_WsVote(int client, int args)
 {
     #if defined DEBUG
-    CReplyToCommand(client, "{fullred}[Debug]{default} Debug mode is on! If this is not expected, please contact the server admin.");
+    CReplyToCommand(client, "{fullred}[Workshop]{default} Debug mode is on! If this is not expected, please contact the server admin.");
     #endif
 
     // Ignore console/rcon and spectators.
@@ -216,9 +346,13 @@ public int Nv_Vote(Handle vote, MenuAction action, int param1, int param2)
 
                 NativeVotes_DisplayPass(vote, g_mapname);
 
-                CPrintToChatAll("{gold}[Workshop]{default} Vote passed. Map will change to '%s' in 10 seconds.", g_mapname);
+                int delay = GetConVarInt(g_delay);
+                char delay_s[4];
+                IntToString(delay, delay_s, sizeof(delay_s));
+
+                CPrintToChatAll("{gold}[Workshop]{default} Vote passed. Map will change to '%s' in 10 seconds.", g_mapname, delay_s);
                 #if !defined DEBUG
-                CreateTimer(10.0, ChangeLevel);
+                CreateTimer(delay, ChangeLevel);
                 #endif
             }
             else

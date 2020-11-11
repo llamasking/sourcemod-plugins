@@ -4,10 +4,12 @@
 	{
 		"Version"
 		{
-			"Latest"	"1.0.6"
+			"Latest"	"1.1.0"
 		}
 
-		"Notes"	"Change update url to allign with new folder structure."
+		"Notes"	"Add cvar 'sm_workshop_delay' to change the delay between a vote passing and the map changing."
+		"Notes"	"Add cvars 'sm_workshop_notify' and 'sm_workshop_notify_delay' to automatically notify players about the map (only if it's a workshop map)."
+		"Notes" "Add command 'sm_cmap' and 'sm_currentmap' to get information on the current map."
 	}
 
 	"Files"
