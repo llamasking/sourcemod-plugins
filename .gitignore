@@ -4,5 +4,5 @@ compile.sh
 spcomp*
 
 # Custom
-examples/
+_template/
 test*

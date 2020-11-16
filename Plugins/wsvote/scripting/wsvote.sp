@@ -23,7 +23,7 @@
 #include <SteamWorks>
 
 //#define DEBUG
-#define VERSION "1.1.0"
+#define VERSION "1.1.1"
 #define UPDATE_URL "https://raw.githubusercontent.com/llamasking/sourcemod-plugins/master/Plugins/wsvote/updatefile.txt"
 
 #if !defined DEBUG
@@ -73,10 +73,10 @@ public void OnPluginStart()
 
     // ConVars
     CreateConVar("sm_workshop_version", VERSION, "Plugin Version", FCVAR_DONTRECORD | FCVAR_NOTIFY);
-    g_minsubs = CreateConVar("sm_workshop_min_subs", "50", "The minimum number of current subscribers for a workshop item.");
+    g_minsubs = CreateConVar("sm_workshop_min_subs", "50", "The minimum number of current subscribers for a workshop map.");
     g_delay   = CreateConVar("sm_workshop_delay", "10", "The delay between the vote passing and the map changing.", _, true, 0.0);
-    g_notify  = CreateConVar("sm_workshop_notify", "1", "Whether or not to notify joining players about the map's creator.'", _, true, 0.0, true, 1.0);
-    g_notifydelay = CreateConVar("sm_workshop_notify_delay", "60", "How long to wait after a client joins before notifying them.'", _, true, 0.0);
+    g_notify  = CreateConVar("sm_workshop_notify", "1", "Whether or not to notify joining players about the map's Workshop name and ID.'", _, true, 0.0, true, 1.0);
+    g_notifydelay = CreateConVar("sm_workshop_notify_delay", "60", "How many seconds to wait after a client joins before notifying them.'", _, true, 0.0);
 
     // Load config values.
     AutoExecConfig();
@@ -346,13 +346,13 @@ public int Nv_Vote(Handle vote, MenuAction action, int param1, int param2)
 
                 NativeVotes_DisplayPass(vote, g_mapname);
 
-                int delay = GetConVarInt(g_delay);
+                float delay = GetConVarFloat(g_delay);
                 char delay_s[4];
-                IntToString(delay, delay_s, sizeof(delay_s));
+                FloatToString(delay, delay_s, sizeof(delay_s));
 
                 CPrintToChatAll("{gold}[Workshop]{default} Vote passed. Map will change to '%s' in 10 seconds.", g_mapname, delay_s);
                 #if !defined DEBUG
-                CreateTimer(delay, ChangeLevel);
+                CreateTimer(delay, Timer_ChangeLevel);
                 #endif
             }
             else
@@ -380,7 +380,7 @@ public int Nv_Vote(Handle vote, MenuAction action, int param1, int param2)
     }
 }
 
-public Action ChangeLevel(Handle timer)
+public Action Timer_ChangeLevel(Handle timer)
 {
     ServerCommand("changelevel workshop/%s", g_mapid);
 }

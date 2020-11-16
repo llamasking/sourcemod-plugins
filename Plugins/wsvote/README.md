@@ -2,7 +2,12 @@
 
 ## Changelog
 
-v1.1.0 (2020-11-10) [(Latest)]()
+v1.1.1 (2020-11-16) [(Latest)]()
+
+- Better ConVar descriptions.
+- Fix tag mismatch warning on compile.
+
+v1.1.0 (2020-11-10) [(Commit)](https://github.com/llamasking/sourcemod-plugins/commit/fa64b28e6a39cdc176c48f40dcf391fa43c7668d)
 
 - Add cvar 'sm_workshop_delay' to change the delay between a vote passing and the map changing.
 - Add cvars 'sm_workshop_notify' and 'sm_workshop_notify_delay' to automatically notify players about the map (only if it's a workshop map).
