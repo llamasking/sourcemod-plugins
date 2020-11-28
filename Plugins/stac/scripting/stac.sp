@@ -16,7 +16,7 @@
 #include <sourcebanspp>
 
 #define PLUGIN_VERSION  "3.3.1"
-#define UPDATE_URL      "https://raw.githubusercontent.com/llamasking/sourcemod-plugins/master/Plugins/stac/scripting/stac.sp"
+#define UPDATE_URL      "https://raw.githubusercontent.com/llamasking/sourcemod-plugins/master/Plugins/stac/updater.txt"
 
 public Plugin myinfo =
 {

@@ -1,0 +1,17 @@
+"Updater"
+{
+	"Information"
+	{
+		"Version"
+		{
+			"Latest"	"3.3.1"
+		}
+	}
+
+	"Files"
+	{
+		"Plugin"	"Path_SM/plugins/stac.smx"
+
+		"Source"	"Path_SM/scripting/stac.sp"
+	}
+}
