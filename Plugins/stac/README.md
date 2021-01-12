@@ -1,7 +1,5 @@
 # Steph's Anti-Cheat
 
-**The latest version of StAC appears to have removed fullbright detections. As such, this plugin is no longer of any use.**
+A modified verson of [StAC](https://github.com/sapphonie/StAC-tf2) with a portion of the FOV detection removed. This is due to a false positive that can occur on the "Funny Feeling" RTD.
 
-A modified verson of [StAC](https://github.com/sapphonie/StAC-tf2) that does not contain any fullbright detections.
-
-This is due to the fact that [certain workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=2281588836) maps cause fullbright detection to falsely trigger.
+This probably should be hooked into the RTD plugin itself so that the detection is only disabled on clients who are actively under the effect, but I'm too lazy for that.

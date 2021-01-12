@@ -4,7 +4,7 @@
 	{
 		"Version"
 		{
-			"Latest"	"3.3.0-llama"
+			"Latest"	"3.6.1-llama"
 		}
 	}
 
