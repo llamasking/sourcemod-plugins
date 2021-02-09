@@ -23,7 +23,7 @@
 #include <SteamWorks>
 
 //#define DEBUG
-#define VERSION "1.1.1"
+#define VERSION "1.1.2"
 #define UPDATE_URL "https://raw.githubusercontent.com/llamasking/sourcemod-plugins/master/Plugins/wsvote/updatefile.txt"
 
 #if !defined DEBUG
@@ -285,7 +285,7 @@ public void ReqCallback(Handle req, bool failure, bool requestSuccessful, EHTTPS
 
     // Verify the item is actually for TF2 and has enough subscribers.
     // Also accidentally verifies that the id is actually a map since apparently only maps can have subscriptions.
-    if (KvGetNum(kv, "consumer_app_id") != 440 || KvGetNum(kv, "subscriptions") < GetConVarInt(g_minsubs))
+    if (KvGetNum(kv, "consumer_app_id") != 440 || (KvGetNum(kv, "lifetime_subscriptions") < GetConVarInt(g_minsubs)))
     {
         CPrintToChat(client, "{gold}[Workshop]{default} The given id is invalid or does not have enough subscribers.");
 

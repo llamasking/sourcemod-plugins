@@ -4,11 +4,10 @@
 	{
 		"Version"
 		{
-			"Latest"	"1.1.1"
+			"Latest"	"1.1.2"
 		}
 
-		"Notes"	"Better ConVar descriptions."
-		"Notes" "Fix tag mismatch warning on compile."
+		"Notes"	"Use lifetime subscriptions rather than current subscriptions."
 	}
 
 	"Files"
