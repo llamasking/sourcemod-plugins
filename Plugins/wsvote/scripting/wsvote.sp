@@ -23,7 +23,7 @@
 #include <SteamWorks>
 
 //#define DEBUG
-#define VERSION "1.1.2"
+#define VERSION "1.1.3"
 #define UPDATE_URL "https://raw.githubusercontent.com/llamasking/sourcemod-plugins/master/Plugins/wsvote/updatefile.txt"
 
 #if !defined DEBUG
@@ -173,15 +173,16 @@ public void UpdateCurrentMapCallback(Handle req, bool failure, bool requestSucce
     SteamWorks_GetHTTPResponseBodyData(req, data, size);
 
     // Turn response into keyvalues.
-    Handle kv = CreateKeyValues("response");
-    StringToKeyValues(kv, data);
+    KeyValues kv = new KeyValues("response");
+    kv.SetEscapeSequences(true);
+    kv.ImportFromString(data);
 
     // Move into item's subkey.
-    KvJumpToKey(kv, "publishedfiledetails");
-    KvJumpToKey(kv, "0");
+    kv.JumpToKey("publishedfiledetails");
+    kv.JumpToKey("0");
 
     // Get map name!
-    KvGetString(kv, "title", g_cmap_name, sizeof(g_cmap_name));
+    kv.GetString("title", g_cmap_name, sizeof(g_cmap_name));
 
     // NOTICE: FOR THE LOVE OF ALL THINGS YOU CARE ABOUT, DELETE HANDLES.
     // OTHERWISE IT WILL LEAK SO BADLY THAT THE SERVER WILL ALMOST IMMEDIATELY CRASH.
@@ -276,16 +277,17 @@ public void ReqCallback(Handle req, bool failure, bool requestSuccessful, EHTTPS
     SteamWorks_GetHTTPResponseBodyData(req, data, size);
 
     // Turn response into keyvalues.
-    Handle kv = CreateKeyValues("response");
-    StringToKeyValues(kv, data);
+    KeyValues kv = new KeyValues("response");
+    kv.SetEscapeSequences(true);
+    kv.ImportFromString(data);
 
     // Move into item's subkey.
-    KvJumpToKey(kv, "publishedfiledetails");
-    KvJumpToKey(kv, "0");
+    kv.JumpToKey("publishedfiledetails");
+    kv.JumpToKey("0");
 
     // Verify the item is actually for TF2 and has enough subscribers.
     // Also accidentally verifies that the id is actually a map since apparently only maps can have subscriptions.
-    if (KvGetNum(kv, "consumer_app_id") != 440 || (KvGetNum(kv, "lifetime_subscriptions") < GetConVarInt(g_minsubs)))
+    if (kv.GetNum("consumer_app_id") != 440 || (kv.GetNum("lifetime_subscriptions") < GetConVarInt(g_minsubs)))
     {
         CPrintToChat(client, "{gold}[Workshop]{default} The given id is invalid or does not have enough subscribers.");
 
@@ -297,7 +299,7 @@ public void ReqCallback(Handle req, bool failure, bool requestSuccessful, EHTTPS
     }
 
     // Get map name!
-    KvGetString(kv, "title", g_mapname, sizeof(g_mapname));
+    kv.GetString("title", g_mapname, sizeof(g_mapname));
 
     // Initialize vote.
     Handle vote = NativeVotes_Create(Nv_Vote, NativeVotesType_ChgLevel);
@@ -332,7 +334,7 @@ public void ReqCallback(Handle req, bool failure, bool requestSuccessful, EHTTPS
     delete kv;
 }
 
-public int Nv_Vote(Handle vote, MenuAction action, int param1, int param2)
+public int Nv_Vote(NativeVote vote, MenuAction action, int param1, int param2)
 {
     // Taken from one of the comments on the NativeVotes thread on AM.
     switch (action)
@@ -344,7 +346,7 @@ public int Nv_Vote(Handle vote, MenuAction action, int param1, int param2)
                 // Attempt to download map ahead of time.
                 ServerCommand("tf_workshop_map_sync %s", g_mapid);
 
-                NativeVotes_DisplayPass(vote, g_mapname);
+                vote.DisplayPass(g_mapname);
 
                 float delay = GetConVarFloat(g_delay);
                 char delay_s[4];
@@ -357,7 +359,7 @@ public int Nv_Vote(Handle vote, MenuAction action, int param1, int param2)
             }
             else
             {
-                NativeVotes_DisplayFail(vote, NativeVotesFail_Loses);
+                vote.DisplayFail(NativeVotesFail_Loses);
             }
         }
 
@@ -365,17 +367,17 @@ public int Nv_Vote(Handle vote, MenuAction action, int param1, int param2)
         {
             if (param1 == VoteCancel_NoVotes)
             {
-                NativeVotes_DisplayFail(vote, NativeVotesFail_NotEnoughVotes);
+                vote.DisplayFail(NativeVotesFail_NotEnoughVotes);
             }
             else
             {
-                NativeVotes_DisplayFail(vote, NativeVotesFail_Generic);
+                vote.DisplayFail(NativeVotesFail_Generic);
             }
         }
 
         case MenuAction_End:
         {
-            NativeVotes_Close(vote);
+            vote.Close();
         }
     }
 }
