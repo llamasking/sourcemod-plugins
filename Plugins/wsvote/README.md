@@ -2,7 +2,16 @@
 
 ## Changelog
 
-v1.1.1 (2020-11-16) [(Latest)]()
+v1.1.3 (2021-02-09) [(Latest)](https://github.com/llamasking/sourcemod-plugins/commit/d9b38bef8a76ddfb6a228996b70f5f1e294dcf32)
+
+- Fix a bug in which any workshop item with a double quote anywhere in the description (or probably title) would always spit an error.
+- Take advantage of (specific) MethodMaps because they're awesome.
+
+v1.1.2 (2021-02-09) [(Commit)](https://github.com/llamasking/sourcemod-plugins/commit/fa64b28e6a39cdc176c48f40dcf391fa43c7668d)
+
+- Use lifetime subscriptions rather than current subscriptions.
+
+v1.1.1 (2020-11-16) [(Commit)](https://github.com/llamasking/sourcemod-plugins/commit/a00737294814ab03b8a78d59e819630417cf40b1)
 
 - Better ConVar descriptions.
 - Fix tag mismatch warning on compile.
