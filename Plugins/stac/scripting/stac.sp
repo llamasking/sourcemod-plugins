@@ -16,9 +16,9 @@
 #include <updater>
 #include <sourcebanspp>
 
-#define PLUGIN_VERSION  "4.0.1"
+#define PLUGIN_VERSION  "4.0.1-llama"
 
-#define UPDATE_URL      "https://raw.githubusercontent.com/sapphonie/StAC-tf2/master/updatefile.txt"
+#define UPDATE_URL      "https://raw.githubusercontent.com/llamasking/sourcemod-plugins/master/Plugins/stac/updatefile.txt"
 
 public Plugin myinfo =
 {
@@ -2027,6 +2027,7 @@ void NetPropCheck(int userid)
 
     if (IsValidClient(Cl))
     {
+        /*
         // set real fov from client here - overrides cheat values (mostly works with ncc, untested on others)
         // we don't want to touch fov if a client is zoomed in while sniping or if they're in a bumper car or some other dumb halloween bullshit
         // we also don't want to check fov if they're dead or if cvars aren't optimized, because fov gets raised temporarily above 90 by teleporters if it isn't explicitly disabled by stac
@@ -2050,6 +2051,7 @@ void NetPropCheck(int userid)
 
             SetEntProp(Cl, Prop_Send, "m_iFOV", fovDesired[Cl]);
         }
+        */
         // forcibly disables thirdperson with some cheats
         ClientCommand(Cl, "firstperson");
         if (DEBUG)
