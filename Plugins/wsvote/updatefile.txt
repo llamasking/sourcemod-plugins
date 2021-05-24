@@ -13,6 +13,7 @@
 	"Files"
 	{
 		"Plugin"	"Path_SM/plugins/wsvote.smx"
+		"Plugin"	"Path_SM/translations/wsvote.phrases.txt"
 
 		"Source"	"Path_SM/scripting/wsvote.sp"
 	}

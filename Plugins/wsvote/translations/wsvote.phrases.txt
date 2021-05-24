@@ -1,0 +1,47 @@
+"Phrases"
+{
+    "WsVote_CurrentMap_Stock"
+    {
+        "#format"   "{1:s}"
+        "en"        "The current map is {green}{1}{default}."
+    }
+    "WsVote_CurrentMap_Workshop"
+    {
+        "#format"   "{1:s},{2:i}"
+        "en"        "The current map is {green}{1}{default} from the workshop and its id is {2}."
+    }
+    "WsVote_DebugMode_Enabled"
+    {
+        "en"        "This server is a debug build of WsVote! If this is not expected, please contact the server administrator immediately."
+    }
+    "WsVote_Spectator"
+    {
+        "en"        "Spectators may not call votes."
+    }
+    "WsVote_CallVote_NoId"
+    {
+        "en"        "A workshop map id was not provided."
+    }
+    "WsVote_CallVote_ApiFailure"
+    {
+        "en"        "A server error has occurred. Please try again later."
+    }
+    "WsVote_CallVote_InvalidItem"
+    {
+        "en"        "The given id is invalid or does not have enough subscribers."
+    }
+    "WsVote_CallVote_FailWarning"
+    {
+        "en"        "If the server does not load the map, please try again. It simply failed to download it."
+    }
+    "WsVote_CallVote_VotePass"
+    {
+        "#format"   "{1:s},{2:i}"
+        "en"        "Vote passed. The map will change to {green}{1}{default} in {2} seconds."
+    }
+
+    "WsVote_ExistingVote"
+    {
+        "en"        "A vote is already in progress."
+    }
+}

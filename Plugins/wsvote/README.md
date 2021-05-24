@@ -2,7 +2,11 @@
 
 ## Changelog
 
-v1.1.3 (2021-02-09) [(Latest)](https://github.com/llamasking/sourcemod-plugins/commit/d9b38bef8a76ddfb6a228996b70f5f1e294dcf32)
+v1.1.4 (2021-05-24) [(Latest)]()
+
+- Add translation file.
+
+v1.1.3 (2021-02-09) [(Commit)](https://github.com/llamasking/sourcemod-plugins/commit/d9b38bef8a76ddfb6a228996b70f5f1e294dcf32)
 
 - Fix a bug in which any workshop item with a double quote anywhere in the description (or probably title) would always spit an error.
 - Take advantage of (specific) MethodMaps because they're awesome.

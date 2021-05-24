@@ -1,19 +1,21 @@
-/*
-    Workshop Map Vote
-    Copyright (C) 2020 - llamasking
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, as per version 3 of the license.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <https://www.gnu.org/licenses/>.
-*/
+/**
+ * ======================================================================
+ * Workshop Map Vote
+ * Copyright (C) 2020-2021 llamasking
+ * ======================================================================
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, as per version 3 of the license.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #pragma semicolon 1
 
@@ -23,7 +25,7 @@
 #include <SteamWorks>
 
 //#define DEBUG
-#define VERSION "1.1.3"
+#define VERSION "1.1.4"
 #define UPDATE_URL "https://raw.githubusercontent.com/llamasking/sourcemod-plugins/master/Plugins/wsvote/updatefile.txt"
 
 #if !defined DEBUG
@@ -46,7 +48,7 @@ char g_mapname[64];
 
 /* ConVars */
 ConVar g_minsubs;
-ConVar g_delay;
+ConVar g_mapchange_delay;
 ConVar g_notify;
 ConVar g_notifydelay;
 
@@ -73,13 +75,16 @@ public void OnPluginStart()
 
     // ConVars
     CreateConVar("sm_workshop_version", VERSION, "Plugin Version", FCVAR_DONTRECORD | FCVAR_NOTIFY);
-    g_minsubs = CreateConVar("sm_workshop_min_subs", "50", "The minimum number of current subscribers for a workshop map.");
-    g_delay   = CreateConVar("sm_workshop_delay", "10", "The delay between the vote passing and the map changing.", _, true, 0.0);
-    g_notify  = CreateConVar("sm_workshop_notify", "1", "Whether or not to notify joining players about the map's Workshop name and ID.'", _, true, 0.0, true, 1.0);
-    g_notifydelay = CreateConVar("sm_workshop_notify_delay", "60", "How many seconds to wait after a client joins before notifying them.'", _, true, 0.0);
+    g_minsubs         = CreateConVar("sm_workshop_min_subs", "50", "The minimum number of current subscribers for a workshop map.");
+    g_mapchange_delay = CreateConVar("sm_workshop_delay", "10", "The delay between the vote passing and the map changing.", _, true, 0.0);
+    g_notify          = CreateConVar("sm_workshop_notify", "1", "Whether or not to notify joining players about the map's Workshop name and ID.'", _, true, 0.0, true, 1.0);
+    g_notifydelay     = CreateConVar("sm_workshop_notify_delay", "60", "How many seconds to wait after a client joins before notifying them.'", _, true, 0.0);
 
     // Load config values.
     AutoExecConfig();
+
+    // Load translations.
+    LoadTranslations("wsvote.phrases.txt");
 
     // Register commands.
     RegConsoleCmd("sm_wsmap", Command_WsVote, "Call a vote to change to a workshop map.");
@@ -206,7 +211,7 @@ public Action Timer_NotifyPlayer(Handle timer, any userid)
 
     // Ignore if the player left and all that good shit
     if(!g_cmap_stock && IsClientInGame(client))
-        CPrintToChat(client, "{gold}[Workshop]{default} The current map is titled \"%s\" on the Workshop and its ID is %s.", g_cmap_name, g_cmap_id);
+        CPrintToChat(client, "{gold}[Workshop]{default} %t", "WsVote_CurrentMap_Workshop", client, g_cmap_name, g_cmap_id);
 }
 
 // Current Map Command
@@ -214,11 +219,11 @@ public Action Command_CurrentMap(int client, int args)
 {
     if(g_cmap_stock)
     {
-        CPrintToChat(client, "{gold}[Workshop]{default} The current map is \"%s\" and it's an official map.", g_cmap_name);
+        CPrintToChat(client, "{gold}[Workshop]{default} %t", "WsVote_CurrentMap_Stock", client, g_cmap_name);
     }
     else
     {
-        CPrintToChat(client, "{gold}[Workshop]{default} The current map is titled \"%s\" on the Workshop and its ID is %s.", g_cmap_name, g_cmap_id);
+        CPrintToChat(client, "{gold}[Workshop]{default} %t", "WsVote_CurrentMap_Workshop", client, g_cmap_name, g_cmap_id);
     }
     return Plugin_Handled;
 }
@@ -227,20 +232,20 @@ public Action Command_CurrentMap(int client, int args)
 public Action Command_WsVote(int client, int args)
 {
     #if defined DEBUG
-    CReplyToCommand(client, "{fullred}[Workshop]{default} Debug mode is on! If this is not expected, please contact the server admin.");
+    CReplyToCommand(client, "{fullred}[Workshop]{default} %t", "WsVote_DebugMode_Enabled", client);
     #endif
 
     // Ignore console/rcon and spectators.
     if (client == 0 || GetClientTeam(client) < 2)
     {
-        CReplyToCommand(client, "{gold}[Workshop]{default} Spectators may not call votes.");
+        CReplyToCommand(client, "{gold}[Workshop]{default} %t", "WsVote_Spectator", client);
         return Plugin_Handled;
     }
 
     // Get workshop id and ignore if none is given.
     if (GetCmdArg(1, g_mapid, sizeof(g_mapid)) == 0)
     {
-        CReplyToCommand(client, "{gold}[Workshop]{default} A workshop map id is required.");
+        CReplyToCommand(client, "{gold}[Workshop]{default} %t", "WsVote_CallVote_NoId", client);
         return Plugin_Handled;
     }
 
@@ -264,7 +269,7 @@ public void ReqCallback(Handle req, bool failure, bool requestSuccessful, EHTTPS
 
     if (failure || !requestSuccessful || statusCode != k_EHTTPStatusCode200OK)
     {
-        CPrintToChat(client, "{gold}[Workshop]{default} A server error has occurred. Please try again later.");
+        CPrintToChat(client, "{gold}[Workshop]{default} %t", "WsVote_CallVote_ApiFailure", client);
         LogError("Error on request for id: '%s'", g_mapid);
         delete req; // See notice below.
         return;
@@ -289,7 +294,7 @@ public void ReqCallback(Handle req, bool failure, bool requestSuccessful, EHTTPS
     // Also accidentally verifies that the id is actually a map since apparently only maps can have subscriptions.
     if (kv.GetNum("consumer_app_id") != 440 || (kv.GetNum("lifetime_subscriptions") < GetConVarInt(g_minsubs)))
     {
-        CPrintToChat(client, "{gold}[Workshop]{default} The given id is invalid or does not have enough subscribers.");
+        CPrintToChat(client, "{gold}[Workshop]{default} %t", "WsVote_CallVote_InvalidItem", client);
 
         // See notice below
         delete req;
@@ -320,12 +325,12 @@ public void ReqCallback(Handle req, bool failure, bool requestSuccessful, EHTTPS
     // Display vote or error if a vote is in progress.
     if (!NativeVotes_Display(vote, players, total, 20, VOTEFLAG_NO_REVOTES))
     {
-        CPrintToChat(client, "{gold}[Workshop]{default} A vote is already in progress.");
+        CPrintToChat(client, "{gold}[Workshop]{default} %t", "WsVote_ExistingVote", client);
         //NativeVotes_DisplayFail(vote, NativeVotesFail_Generic);
     }
     else
     {
-        PrintHintText(client, "If the server does not load the map, please try again. It simply failed to download it.");
+        PrintHintText(client, "%t", "WsVote_CallVote_FailWarning", client);
     }
 
     // NOTICE: FOR THE LOVE OF ALL THINGS YOU CARE ABOUT, DELETE HANDLES.
@@ -348,11 +353,9 @@ public int Nv_Vote(NativeVote vote, MenuAction action, int param1, int param2)
 
                 vote.DisplayPass(g_mapname);
 
-                float delay = GetConVarFloat(g_delay);
-                char delay_s[4];
-                FloatToString(delay, delay_s, sizeof(delay_s));
+                float delay = GetConVarFloat(g_mapchange_delay);
 
-                CPrintToChatAll("{gold}[Workshop]{default} Vote passed. Map will change to '%s' in 10 seconds.", g_mapname, delay_s);
+                CPrintToChatAll("{gold}[Workshop]{default} %t", "WsVote_CallVote_VotePass", g_mapname, RoundToNearest(delay));
                 #if !defined DEBUG
                 CreateTimer(delay, Timer_ChangeLevel);
                 #endif
