@@ -1,3 +1,4 @@
 {
-    "sourcepawnLanguageServer.sourcemod_home": "./include"
+    "sourcepawnLanguageServer.sourcemod_home": "./include",
+    "sourcepawnLanguageServer.spcomp_path": "."
 }
