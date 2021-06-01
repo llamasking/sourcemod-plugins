@@ -4,10 +4,13 @@
 	{
 		"Version"
 		{
-			"Latest"	"1.0.0"
+			"Latest"	"1.0.1"
 		}
 
-		"Notes"	"Initial AlliedMods release."
+		"Notes"	"Fixed player counts only the first digit"
+		"Notes" "Increase max length of a country name to 63 characters"
+		"Notes" "Better string sanitization (See the plugin's README on the GitHub)"
+		"Notes" "General optimization"
 	}
 
 	"Files"

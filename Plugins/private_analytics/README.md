@@ -1,6 +1,19 @@
 # Private Analytics
 
+### Note: Sanitization
+
+This plugin uses Database.Format() to escape strings before sending them to the DB. I do believe this is safe enough, however as variables are escaped and added directly to the query instead of using a prepared statement, there is always a potential for SQL injection.
+
+Further note: Usernames, SteamIDs, and IPs are **never** sent to the database. The only data sent to the DB that the end user has any significant sense of control over are the map. All other variables sent to the DB originate from the server itself. This is why I do not believe there is a significant risk of SQL injection.
+
 ## Changelog
+
+v1.0.1 (2021-05-30) [(Latest)]()
+
+- Fixed player counts only the first digit
+- Increase max length of a country name to 63 characters
+- Better string sanitization (See note above)
+- General optimization
 
 v1.0.0 (2020-11-03) [(Commit)](https://github.com/llamasking/sourcemod-plugins/commit/38e66465c8d1a7a5d82d068fec85267a79a28920)
 
