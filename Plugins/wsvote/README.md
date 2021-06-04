@@ -2,7 +2,11 @@
 
 ## Changelog
 
-v1.1.4 (2021-05-24) [(Latest)]()
+v1.1.5 (2021-06-03) [(Latest)]()
+
+- Translation fixes.
+
+v1.1.4 (2021-05-24) [(Commit)](https://github.com/llamasking/sourcemod-plugins/commit/4e21026d717f0ca62050d3efd336839d7aaec229)
 
 - Add translation file.
 

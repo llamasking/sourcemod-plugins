@@ -8,7 +8,7 @@
     "WsVote_CurrentMap_Workshop"
     {
         "#format"   "{1:s},{2:i}"
-        "en"        "The current map is {green}{1}{default} from the workshop and its id is {2}."
+        "en"        "The current map is "{green}{1}{default}" from the workshop and its id is {2}."
     }
     "WsVote_DebugMode_Enabled"
     {
@@ -37,7 +37,7 @@
     "WsVote_CallVote_VotePass"
     {
         "#format"   "{1:s},{2:i}"
-        "en"        "Vote passed. The map will change to {green}{1}{default} in {2} seconds."
+        "en"        "Vote passed. The map will change to "{green}{1}{default}" in {2} seconds."
     }
 
     "WsVote_ExistingVote"

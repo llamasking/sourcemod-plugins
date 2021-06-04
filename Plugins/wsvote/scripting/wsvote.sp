@@ -25,7 +25,7 @@
 #include <SteamWorks>
 
 //#define DEBUG
-#define VERSION "1.1.4"
+#define VERSION "1.1.5"
 #define UPDATE_URL "https://raw.githubusercontent.com/llamasking/sourcemod-plugins/master/Plugins/wsvote/updatefile.txt"
 
 #if !defined DEBUG
@@ -211,7 +211,7 @@ public Action Timer_NotifyPlayer(Handle timer, any userid)
 
     // Ignore if the player left and all that good shit
     if(!g_cmap_stock && IsClientInGame(client))
-        CPrintToChat(client, "{gold}[Workshop]{default} %t", "WsVote_CurrentMap_Workshop", client, g_cmap_name, g_cmap_id);
+        CPrintToChat(client, "{gold}[Workshop]{default} %t", "WsVote_CurrentMap_Workshop", g_cmap_name, g_cmap_id);
 }
 
 // Current Map Command
@@ -219,11 +219,11 @@ public Action Command_CurrentMap(int client, int args)
 {
     if(g_cmap_stock)
     {
-        CPrintToChat(client, "{gold}[Workshop]{default} %t", "WsVote_CurrentMap_Stock", client, g_cmap_name);
+        CPrintToChat(client, "{gold}[Workshop]{default} %t", "WsVote_CurrentMap_Stock", g_cmap_name);
     }
     else
     {
-        CPrintToChat(client, "{gold}[Workshop]{default} %t", "WsVote_CurrentMap_Workshop", client, g_cmap_name, g_cmap_id);
+        CPrintToChat(client, "{gold}[Workshop]{default} %t", "WsVote_CurrentMap_Workshop", g_cmap_name, g_cmap_id);
     }
     return Plugin_Handled;
 }
@@ -269,7 +269,7 @@ public void ReqCallback(Handle req, bool failure, bool requestSuccessful, EHTTPS
 
     if (failure || !requestSuccessful || statusCode != k_EHTTPStatusCode200OK)
     {
-        CPrintToChat(client, "{gold}[Workshop]{default} %t", "WsVote_CallVote_ApiFailure", client);
+        CPrintToChat(client, "{gold}[Workshop]{default} %t", "WsVote_CallVote_ApiFailure");
         LogError("Error on request for id: '%s'", g_mapid);
         delete req; // See notice below.
         return;
@@ -294,7 +294,7 @@ public void ReqCallback(Handle req, bool failure, bool requestSuccessful, EHTTPS
     // Also accidentally verifies that the id is actually a map since apparently only maps can have subscriptions.
     if (kv.GetNum("consumer_app_id") != 440 || (kv.GetNum("lifetime_subscriptions") < GetConVarInt(g_minsubs)))
     {
-        CPrintToChat(client, "{gold}[Workshop]{default} %t", "WsVote_CallVote_InvalidItem", client);
+        CPrintToChat(client, "{gold}[Workshop]{default} %t", "WsVote_CallVote_InvalidItem");
 
         // See notice below
         delete req;
@@ -325,7 +325,7 @@ public void ReqCallback(Handle req, bool failure, bool requestSuccessful, EHTTPS
     // Display vote or error if a vote is in progress.
     if (!NativeVotes_Display(vote, players, total, 20, VOTEFLAG_NO_REVOTES))
     {
-        CPrintToChat(client, "{gold}[Workshop]{default} %t", "WsVote_ExistingVote", client);
+        CPrintToChat(client, "{gold}[Workshop]{default} %t", "WsVote_ExistingVote");
         //NativeVotes_DisplayFail(vote, NativeVotesFail_Generic);
     }
     else
