@@ -19,13 +19,15 @@
 
 #pragma semicolon 1
 
-#include <sourcemod>
+#include <SteamWorks>
 #include <multicolors>
 #include <nativevotes>
-#include <SteamWorks>
+#include <sourcemod>
+
+#pragma newdecls required
 
 //#define DEBUG
-#define VERSION "1.1.5"
+#define VERSION "1.1.5-1"
 #define UPDATE_URL "https://raw.githubusercontent.com/llamasking/sourcemod-plugins/master/Plugins/wsvote/updatefile.txt"
 
 #if !defined DEBUG
@@ -121,7 +123,7 @@ public void OnMapStart()
     char cmap_name[64];
     GetCurrentMap(cmap_name, sizeof(cmap_name));
 
-    if(StrContains(cmap_name, ".ugc") != -1)
+    if (StrContains(cmap_name, ".ugc") != -1)
     {
         #if defined DEBUG
         LogMessage("---- Workshop Map");
@@ -198,7 +200,7 @@ public void UpdateCurrentMapCallback(Handle req, bool failure, bool requestSucce
 // Notify Functionality
 public void OnClientPutInServer(int client)
 {
-    if(GetConVarBool(g_notify) && !IsFakeClient(client))
+    if (GetConVarBool(g_notify) && !IsFakeClient(client))
         CreateTimer(GetConVarFloat(g_notifydelay), Timer_NotifyPlayer, GetClientUserId(client));
 }
 
@@ -210,14 +212,14 @@ public Action Timer_NotifyPlayer(Handle timer, any userid)
     int client = GetClientOfUserId(userid);
 
     // Ignore if the player left and all that good shit
-    if(!g_cmap_stock && IsClientInGame(client))
+    if (!g_cmap_stock && IsClientInGame(client))
         CPrintToChat(client, "{gold}[Workshop]{default} %t", "WsVote_CurrentMap_Workshop", g_cmap_name, g_cmap_id);
 }
 
 // Current Map Command
 public Action Command_CurrentMap(int client, int args)
 {
-    if(g_cmap_stock)
+    if (g_cmap_stock)
     {
         CPrintToChat(client, "{gold}[Workshop]{default} %t", "WsVote_CurrentMap_Stock", g_cmap_name);
     }
@@ -315,7 +317,7 @@ public void ReqCallback(Handle req, bool failure, bool requestSuccessful, EHTTPS
     // Based off code from nativevotes.inc
     int total;
     int[] players = new int[MaxClients];
-    for (int i=1; i<=MaxClients; i++)
+    for (int i = 1; i <= MaxClients; i++)
     {
         if (!IsClientInGame(i) || IsFakeClient(i) || (GetClientTeam(i) < 2))
             continue;
@@ -344,44 +346,44 @@ public int Nv_Vote(NativeVote vote, MenuAction action, int param1, int param2)
     // Taken from one of the comments on the NativeVotes thread on AM.
     switch (action)
     {
-        case MenuAction_VoteEnd:
+    case MenuAction_VoteEnd:
+    {
+        if (param1 == NATIVEVOTES_VOTE_YES)
         {
-            if (param1 == NATIVEVOTES_VOTE_YES)
-            {
-                // Attempt to download map ahead of time.
-                ServerCommand("tf_workshop_map_sync %s", g_mapid);
+            // Attempt to download map ahead of time.
+            ServerCommand("tf_workshop_map_sync %s", g_mapid);
 
-                vote.DisplayPass(g_mapname);
+            vote.DisplayPass(g_mapname);
 
-                float delay = GetConVarFloat(g_mapchange_delay);
+            float delay = GetConVarFloat(g_mapchange_delay);
 
-                CPrintToChatAll("{gold}[Workshop]{default} %t", "WsVote_CallVote_VotePass", g_mapname, RoundToNearest(delay));
-                #if !defined DEBUG
-                CreateTimer(delay, Timer_ChangeLevel);
-                #endif
-            }
-            else
-            {
-                vote.DisplayFail(NativeVotesFail_Loses);
-            }
+            CPrintToChatAll("{gold}[Workshop]{default} %t", "WsVote_CallVote_VotePass", g_mapname, RoundToNearest(delay));
+            #if !defined DEBUG
+            CreateTimer(delay, Timer_ChangeLevel);
+            #endif
         }
-
-        case MenuAction_VoteCancel:
+        else
         {
-            if (param1 == VoteCancel_NoVotes)
-            {
-                vote.DisplayFail(NativeVotesFail_NotEnoughVotes);
-            }
-            else
-            {
-                vote.DisplayFail(NativeVotesFail_Generic);
-            }
+            vote.DisplayFail(NativeVotesFail_Loses);
         }
+    }
 
-        case MenuAction_End:
+    case MenuAction_VoteCancel:
+    {
+        if (param1 == VoteCancel_NoVotes)
         {
-            vote.Close();
+            vote.DisplayFail(NativeVotesFail_NotEnoughVotes);
         }
+        else
+        {
+            vote.DisplayFail(NativeVotesFail_Generic);
+        }
+    }
+
+    case MenuAction_End:
+    {
+        vote.Close();
+    }
     }
 }
 
