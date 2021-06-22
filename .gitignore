@@ -1,5 +1,5 @@
 # Compiler
-include/
+#include/
 compile.sh
 spcomp*
 
