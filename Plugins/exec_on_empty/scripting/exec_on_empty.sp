@@ -14,11 +14,11 @@ public Plugin myinfo =
     author = "llamasking",
     description = "Executes a config whenever the server is empty.",
     version = VERSION,
-    url = "https://github.com/llamasking/sourcemod-plugins"
+    url = "https://github.com/llamasking/sourcemod-plugins",
 }
 
-ConVar g_enabled;                // Whether or not the plugin is on
-ConVar g_config;                 // Config file to load
+ConVar g_enabled; // Whether or not the plugin is on
+ConVar g_config;  // Config file to load
 
 int g_players;                   // Player count
 Handle g_clients;                // List of clients connected
@@ -43,37 +43,37 @@ public void OnClientAuthorized(int client, const char[] auth)
     char client_s[MAX_ID_STRING];
 
     // Filter fake clients
-    if(!client || IsFakeClient(client) || StrEqual(auth, "BOT"))
+    if (!client || IsFakeClient(client) || StrEqual(auth, "BOT"))
         return;
 
     // Get player ID as a string
     IntToString(GetClientUserId(client), client_s, sizeof(client_s));
 
     // Check if player is already in the list of IDs
-    if(SetTrieValue(g_clients, client_s, 1, false))
+    if (SetTrieValue(g_clients, client_s, 1, false))
     {
         g_players++;
     }
 }
 
-public OnClientDisconnect(int client)
+public void OnClientDisconnect(int client)
 {
     char client_s[MAX_ID_STRING];
 
     // Filter fake clients
-    if(!client || IsFakeClient(client))
+    if (!client || IsFakeClient(client))
         return;
 
     // Get player ID as a string
     IntToString(GetClientUserId(client), client_s, sizeof(client_s));
 
     // Try to remove the player ID from the list of IDs
-    if(RemoveFromTrie(g_clients, client_s))
+    if (RemoveFromTrie(g_clients, client_s))
     {
         g_players--;
 
         // If there are no players left in the server and plugin is enabled
-        if((g_players == 0))
+        if ((g_players == 0))
         {
             // If you do this immediately, changing the map will run exec.
             g_timer = CreateTimer(2.5, ExecCfg);
@@ -82,7 +82,8 @@ public OnClientDisconnect(int client)
 }
 
 // Prevent running if the map is changing.
-public void OnMapEnd() {
+public void OnMapEnd()
+{
     // Prevent errors when everyone actually does leave.
     // IsValidHandle is deprecated but idk a good alternative.
     if (IsValidHandle(g_timer))
