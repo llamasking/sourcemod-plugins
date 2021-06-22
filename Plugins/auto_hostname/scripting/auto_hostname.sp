@@ -1,19 +1,21 @@
-/*
-    Auto Hostname
-    Copyright (C) 2020 - llamasking
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, as per version 3 of the license.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <https://www.gnu.org/licenses/>.
-*/
+/**
+ * ======================================================================
+ * Auto Hostname
+ * Copyright (C) 2020-2021 llamasking
+ * ======================================================================
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, as per version 3 of the license.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #pragma semicolon 1
 #include <sourcemod>
@@ -26,7 +28,7 @@ public Plugin myinfo =
     author = "llamasking",
     description = "Automatically generates the server's hostname after each map change.",
     version = VERSION,
-    url = "https://github.com/llamasking/sourcemod-plugins"
+    url = "https://github.com/llamasking/sourcemod-plugins",
 }
 
 ConVar g_enabled;
@@ -64,20 +66,21 @@ public void OnConfigsExecuted()
 public Action UpdateHostname(Handle timer)
 {
     // Check if plugin is enabled
-    if(GetConVarBool(g_enabled))
+    if (GetConVarBool(g_enabled))
     {
-        // Get map name maybe workshops work, too. Idk.
+        // Get map name.
         char g_map[512];
         GetCurrentMap(g_map, sizeof(g_map));
+        // Strip off suffix that exists on workshop maps.
         GetMapDisplayName(g_map, g_map, sizeof(g_map));
 
-        // Break apart the map name
+        // Split name across underscores
         int i = StrContains(g_map, "_") + 1;
         char exploded[8][32];
         ExplodeString(g_map[i], "_", exploded, 8, 32);
 
         // Capitalize things!
-        for(i = 0; i < sizeof(exploded); i++)
+        for (i = 0; i < sizeof(exploded); i++)
         {
             exploded[i][0] = CharToUpper(exploded[i][0]);
         }

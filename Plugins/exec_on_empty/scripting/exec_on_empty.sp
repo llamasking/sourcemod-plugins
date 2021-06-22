@@ -1,6 +1,9 @@
 #pragma semicolon 1
 #include <sourcemod>
 
+#pragma newdecls required
+#pragma semicolon 1
+
 #define MAX_ID_STRING 6
 #define VERSION "1.7.2"
 //#define DEBUG
@@ -14,12 +17,12 @@ public Plugin myinfo =
     url = "https://github.com/llamasking/sourcemod-plugins"
 }
 
-ConVar g_enabled;       // Whether or not the plugin is on
-ConVar g_config;        // Config file to load
+ConVar g_enabled;                // Whether or not the plugin is on
+ConVar g_config;                 // Config file to load
 
-int g_players;          // Player count
-Handle g_clients;       // List of clients connected
-Handle g_timer;         // Timer to exec config everyone leaves
+int g_players;                   // Player count
+Handle g_clients;                // List of clients connected
+Handle g_timer = INVALID_HANDLE; // Timer to exec config everyone leaves
 
 public void OnPluginStart()
 {
