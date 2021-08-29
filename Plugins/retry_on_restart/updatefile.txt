@@ -1,0 +1,19 @@
+"Updater"
+{
+	"Information"
+	{
+		"Version"
+		{
+			"Latest"	"1.3"
+		}
+
+		"Notes"	"Initial release."
+	}
+
+	"Files"
+	{
+		"Plugin"	"Path_SM/plugins/retry_on_restart.smx"
+
+		"Source"	"Path_SM/scripting/retry_on_restart.sp"
+	}
+}
