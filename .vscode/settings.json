@@ -1,4 +1,7 @@
 {
-    "sourcepawnLanguageServer.sourcemod_home": "./include",
-    "sourcepawnLanguageServer.spcomp_path": "."
+    "sourcepawn.SourcemodHome": "./include",
+    "sourcepawn.SpcompPath": ".",
+    "sourcepawn.enableLinter": false,
+    "editor.formatOnSave": false,
+    "editor.formatOnPaste": false,
 }
