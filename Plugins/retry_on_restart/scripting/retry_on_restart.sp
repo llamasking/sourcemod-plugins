@@ -20,7 +20,7 @@
 #include <sourcemod>
 
 #define DEBUG
-#define VERSION "1.3"
+#define VERSION "1.3.1"
 #define UPDATE_URL "https://raw.githubusercontent.com/llamasking/sourcemod-plugins/master/Plugins/retry_on_restart/updatefile.txt"
 
 #if !defined DEBUG
@@ -54,6 +54,9 @@ public void OnPluginStart() {
     RegServerCmd("_restart", OnDown);
     RegAdminCmd("sm_retryandrestart", RestartServerCmd, ADMFLAG_RCON, "Forces all players to RETRY connection, and restarts the server. Optionally, pass the argument 'false' to NOT recoonect players.");
     RegAdminCmd("sm_schedulerestart", ScheduleRestartCmd, ADMFLAG_RCON, "Schedules a restart to occur in X seconds.");
+
+    // Load config values.
+    AutoExecConfig();
 
     HookConVarChange(cvar_restart_time, CvarChanged);
     HookConVarChange(cvar_restart_warn, CvarChanged);
@@ -152,19 +155,21 @@ public Action HandleScheduledRestart(Handle timer, any client)
         }
     }
 
-    if (GetConVarFloat(cvar_delay) == 0.0)
+    float delay = GetConVarFloat(cvar_delay);
+    if (delay == 0.0)
     {
         ServerCommand("_restart");
     }
     else
     {
-        CreateTimer(GetConVarFloat(cvar_delay), DoRestart);
+        CreateTimer(delay, DoRestart);
     }
 }
 
 public void RetryAndRestart(int client)
 {
     LogAction(client, -1, "\"%L\" restarted the server. Attempting to reconnect all players.", client);
+
     for(int i = 1; i <= MaxClients; i++)
     {
         if (IsClientInGame(i) && !IsFakeClient(i))
@@ -207,7 +212,7 @@ public void InitiateAutoRestartTimer()
         int restartTime = GetConVarInt(cvar_restart_time);
 
         // Handle if the restart time is in a future day. (Ex. its 2300 and the server is set to restart at 0400)
-        if(currentTime > restartTime)
+        if(currentTime >= restartTime)
             restartTime += 2400;
 
         // Break time into hours in minuites.
