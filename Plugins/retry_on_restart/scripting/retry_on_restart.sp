@@ -19,8 +19,8 @@
 #pragma newdecls required
 #include <sourcemod>
 
-#define DEBUG
-#define VERSION "1.3.1"
+//#define DEBUG
+#define VERSION "1.3.1-1"
 #define UPDATE_URL "https://raw.githubusercontent.com/llamasking/sourcemod-plugins/master/Plugins/retry_on_restart/updatefile.txt"
 
 #if !defined DEBUG
