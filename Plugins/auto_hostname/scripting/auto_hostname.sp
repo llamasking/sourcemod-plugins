@@ -20,7 +20,7 @@
 #pragma semicolon 1
 #include <sourcemod>
 
-#define VERSION "1.1.1"
+#define VERSION "1.1.2"
 
 public Plugin myinfo =
 {
@@ -96,8 +96,8 @@ public Action UpdateHostname(Handle timer)
         TrimString(g_map);
 
         // Declare some stuff before changing the hostname
-        char pfx[32];
-        char sfx[32];
+        char pfx[256];
+        char sfx[256];
 
         // Finally, actually change the hostname.
         GetConVarString(g_prefix, pfx, sizeof(pfx));
