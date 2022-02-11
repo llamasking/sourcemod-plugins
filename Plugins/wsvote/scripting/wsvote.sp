@@ -27,7 +27,7 @@
 #pragma newdecls required
 
 //#define DEBUG
-#define VERSION "1.1.6"
+#define VERSION "1.1.7"
 #define UPDATE_URL "https://raw.githubusercontent.com/llamasking/sourcemod-plugins/master/Plugins/wsvote/updatefile.txt"
 
 #if !defined DEBUG
@@ -93,6 +93,8 @@ public void OnPluginStart()
     RegConsoleCmd("sm_workshopmap", Command_WsVote, "Call a vote to change to a workshop map.");
     RegConsoleCmd("sm_wsmap", Command_WsVote, "Call a vote to change to a workshop map.");
     RegConsoleCmd("sm_wsvote", Command_WsVote, "Call a vote to change to a workshop map.");
+    RegConsoleCmd("sm_wsm", Command_WsVote, "Call a vote to change to a workshop map.");
+    RegConsoleCmd("sm_ws", Command_WsVote, "Call a vote to change to a workshop map.");
     RegConsoleCmd("sm_cmap", Command_CurrentMap, "Shows information about the current map.");
     RegConsoleCmd("sm_currentmap", Command_CurrentMap, "Shows information about the current map.");
 
