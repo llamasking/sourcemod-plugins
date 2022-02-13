@@ -1,8 +1,10 @@
 # Compiler
-#include/
-compile.sh
+!include/*
 spcomp*
 
+# VSCode Settings
+.vscode/settings.json
+
 # Custom
-_template/
-test*
+Plugins/_template/
+Plugins/test/
