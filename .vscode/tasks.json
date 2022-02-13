@@ -4,7 +4,7 @@
         {
             "label": "Compile",
             "type": "shell",
-            "command": "./spcomp64 ${relativeFile} -o ${relativeFileDirname}/../plugins/${fileBasenameNoExtension}.smx",
+            "command": "${workspaceFolder}/spcomp64 ${relativeFile} -o ${relativeFileDirname}/../plugins/${fileBasenameNoExtension}.smx",
             "problemMatcher": [
                 "$msCompile"
             ],

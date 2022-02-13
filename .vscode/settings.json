@@ -1,7 +1,0 @@
-{
-    "sourcepawn.SourcemodHome": "./include",
-    "sourcepawn.SpcompPath": ".",
-    "sourcepawn.enableLinter": false,
-    "editor.formatOnSave": false,
-    "editor.formatOnPaste": false,
-}
