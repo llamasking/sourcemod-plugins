@@ -19,29 +19,31 @@
 
 #pragma semicolon 1
 
-#include <SteamWorks>
 #include <multicolors>
 #include <nativevotes>
 #include <sourcemod>
+#include <SteamWorks>
 
 #pragma newdecls required
 
 //#define DEBUG
-#define VERSION "1.1.7"
+#define VERSION    "1.1.7"
 #define UPDATE_URL "https://raw.githubusercontent.com/llamasking/sourcemod-plugins/master/Plugins/wsvote/updatefile.txt"
 
 #if !defined DEBUG
-#undef REQUIRE_PLUGIN
-#include <updater>
+    #undef REQUIRE_PLUGIN
+    #include <updater>
 #endif
 
 public Plugin myinfo =
 {
-    name = "Workshop Map Vote",
-    author = "llamasking",
+    name        = "Workshop Map Vote",
+    author      = "llamasking",
     description = "Allows players to call votes to change to workshop maps.",
-    version = VERSION,
-    url = "https://github.com/llamasking/sourcemod-plugins"
+    version     = VERSION,
+    url         = "https://github.com/llamasking/sourcemod-plugins"
+
+
 }
 
 /* Global Variables */
@@ -98,16 +100,17 @@ public void OnPluginStart()
     RegConsoleCmd("sm_cmap", Command_CurrentMap, "Shows information about the current map.");
     RegConsoleCmd("sm_currentmap", Command_CurrentMap, "Shows information about the current map.");
 
-    // Updater
-    #if !defined DEBUG
+// Updater
+#if !defined DEBUG
     if (LibraryExists("updater"))
     {
         Updater_AddPlugin(UPDATE_URL);
     }
-    #endif
+#endif
 }
 
 #if !defined DEBUG
+
 public void OnLibraryAdded(const char[] name)
 {
     if (StrEqual(name, "updater"))
@@ -120,18 +123,18 @@ public void OnLibraryAdded(const char[] name)
 // Current Map Functionality
 public void OnMapStart()
 {
-    #if defined DEBUG
+#if defined DEBUG
     LogMessage("---- Update Map");
-    #endif
+#endif
 
     char cmap_name[64];
     GetCurrentMap(cmap_name, sizeof(cmap_name));
 
     if (StrContains(cmap_name, ".ugc") != -1)
     {
-        #if defined DEBUG
+#if defined DEBUG
         LogMessage("---- Workshop Map");
-        #endif
+#endif
 
         g_cmap_stock = false;
 
@@ -153,9 +156,9 @@ public void OnMapStart()
     }
     else
     {
-        #if defined DEBUG
+#if defined DEBUG
         LogMessage("---- Stock Map");
-        #endif
+#endif
 
         g_cmap_stock = true;
         strcopy(g_cmap_name, sizeof(g_cmap_name), cmap_name);
@@ -164,16 +167,16 @@ public void OnMapStart()
 
 public void UpdateCurrentMapCallback(Handle req, bool failure, bool requestSuccessful, EHTTPStatusCode statusCode)
 {
-    #if defined DEBUG
+#if defined DEBUG
     LogMessage("---- Map Callback");
-    #endif
+#endif
 
     if (failure || !requestSuccessful || statusCode != k_EHTTPStatusCode200OK)
     {
         strcopy(g_cmap_name, sizeof(g_cmap_name), "Error");
 
         LogError("Error updating current map info!");
-        delete req; // See notice below.
+        delete req;    // See notice below.
         return;
     }
 
@@ -210,13 +213,13 @@ public void OnClientPutInServer(int client)
 
 public Action Timer_NotifyPlayer(Handle timer, any userid)
 {
-    #if defined DEBUG
+#if defined DEBUG
     LogMessage("---- Notify Timer");
-    #endif
+#endif
     int client = GetClientOfUserId(userid);
 
     // Ignore if the player left and all that good shit
-    if (!g_cmap_stock && IsClientInGame(client))
+    if (!g_cmap_stock && IsClientValid(client))
         CPrintToChat(client, "{gold}[Workshop]{default} %t", "WsVote_CurrentMap_Workshop", g_cmap_name, g_cmap_id);
 }
 
@@ -237,9 +240,9 @@ public Action Command_CurrentMap(int client, int args)
 // WsVote / WsMap Command
 public Action Command_WsVote(int client, int args)
 {
-    #if defined DEBUG
+#if defined DEBUG
     CReplyToCommand(client, "{fullred}[Workshop]{default} %t", "WsVote_DebugMode_Enabled", client);
-    #endif
+#endif
 
     // Ignore console/rcon and spectators.
     if (client == 0 || GetClientTeam(client) < 2)
@@ -277,7 +280,7 @@ public void ReqCallback(Handle req, bool failure, bool requestSuccessful, EHTTPS
     {
         CPrintToChat(client, "{gold}[Workshop]{default} %t", "WsVote_CallVote_ApiFailure");
         LogError("Error on request for id: '%s'", g_mapid);
-        delete req; // See notice below.
+        delete req;    // See notice below.
         return;
     }
 
@@ -323,7 +326,7 @@ public void ReqCallback(Handle req, bool failure, bool requestSuccessful, EHTTPS
     int[] players = new int[MaxClients];
     for (int i = 1; i <= MaxClients; i++)
     {
-        if (!IsClientInGame(i) || IsFakeClient(i) || (GetClientTeam(i) < 2))
+        if (!IsClientValid(i) || (GetClientTeam(i) < 2))
             continue;
         players[total++] = i;
     }
@@ -332,7 +335,7 @@ public void ReqCallback(Handle req, bool failure, bool requestSuccessful, EHTTPS
     if (!NativeVotes_Display(vote, players, total, 20, VOTEFLAG_NO_REVOTES))
     {
         CPrintToChat(client, "{gold}[Workshop]{default} %t", "WsVote_ExistingVote");
-        //NativeVotes_DisplayFail(vote, NativeVotesFail_Generic);
+        // NativeVotes_DisplayFail(vote, NativeVotesFail_Generic);
     }
     else
     {
@@ -350,48 +353,57 @@ public int Nv_Vote(NativeVote vote, MenuAction action, int param1, int param2)
     // Taken from one of the comments on the NativeVotes thread on AM.
     switch (action)
     {
-    case MenuAction_VoteEnd:
-    {
-        if (param1 == NATIVEVOTES_VOTE_YES)
+        case MenuAction_VoteEnd:
         {
-            // Attempt to download map ahead of time.
-            ServerCommand("tf_workshop_map_sync %s", g_mapid);
+            if (param1 == NATIVEVOTES_VOTE_YES)
+            {
+                // Attempt to download map ahead of time.
+                ServerCommand("tf_workshop_map_sync %s", g_mapid);
 
-            vote.DisplayPass(g_mapname);
+                vote.DisplayPass(g_mapname);
 
-            float delay = GetConVarFloat(g_mapchange_delay);
+                float delay = GetConVarFloat(g_mapchange_delay);
 
-            CPrintToChatAll("{gold}[Workshop]{default} %t", "WsVote_CallVote_VotePass", g_mapname, RoundToNearest(delay));
-            #if !defined DEBUG
-            CreateTimer(delay, Timer_ChangeLevel);
-            #endif
+                CPrintToChatAll("{gold}[Workshop]{default} %t", "WsVote_CallVote_VotePass", g_mapname, RoundToNearest(delay));
+#if !defined DEBUG
+                CreateTimer(delay, Timer_ChangeLevel);
+#endif
+            }
+            else
+            {
+                vote.DisplayFail(NativeVotesFail_Loses);
+            }
         }
-        else
+
+        case MenuAction_VoteCancel:
         {
-            vote.DisplayFail(NativeVotesFail_Loses);
+            if (param1 == VoteCancel_NoVotes)
+            {
+                vote.DisplayFail(NativeVotesFail_NotEnoughVotes);
+            }
+            else
+            {
+                vote.DisplayFail(NativeVotesFail_Generic);
+            }
         }
-    }
 
-    case MenuAction_VoteCancel:
-    {
-        if (param1 == VoteCancel_NoVotes)
+        case MenuAction_End:
         {
-            vote.DisplayFail(NativeVotesFail_NotEnoughVotes);
+            vote.Close();
         }
-        else
-        {
-            vote.DisplayFail(NativeVotesFail_Generic);
-        }
-    }
-
-    case MenuAction_End:
-    {
-        vote.Close();
-    }
     }
 }
 
 public Action Timer_ChangeLevel(Handle timer)
 {
     ServerCommand("changelevel workshop/%s", g_mapid);
+}
+
+bool IsClientValid(int client)
+{
+    return (
+        (0 < client <= MaxClients)
+        && IsClientInGame(client)
+        && !IsFakeClient(client)
+        && !IsClientInKickQueue(client));
 }

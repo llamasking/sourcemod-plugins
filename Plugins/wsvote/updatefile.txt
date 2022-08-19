@@ -4,10 +4,11 @@
 	{
 		"Version"
 		{
-			"Latest"	"1.1.7"
+			"Latest"	"1.1.8"
 		}
 
-		"Notes"	"Register sm_ws and sm_wsm commands."
+		"Notes"	"Fix a minor error if a player leaves before getting a map notification."
+		"Notes"	"Code formatting tweaks."
 	}
 
 	"Files"
