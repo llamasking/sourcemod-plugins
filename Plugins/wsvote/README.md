@@ -2,7 +2,20 @@
 
 ## Changelog
 
-v1.1.5 (2021-06-03) [(Latest)]()
+v1.1.8 (2021-08-19) [(Commit)](https://github.com/llamasking/sourcemod-plugins/commit/8b2aa4bc047b489b9b7b42a7428bf5ea8638d41b)
+
+- Fix a minor error if a player leaves before getting a map notification.
+- Code formatting tweaks.
+
+v1.1.7 (2022-02-11) [(Commit)](https://github.com/llamasking/sourcemod-plugins/commit/507121f5769e6ee67872ea7d4a1fec213ba6306f)
+
+- Register sm_ws and sm_wsm commands
+
+v1.1.6 (2021-10-29) [(Commit)](https://github.com/llamasking/sourcemod-plugins/commit/06371b476e49ea2a2f7e25acab325de6ae81e8e4)
+
+- Register sm_workshop and sm_workshopmap commands
+
+v1.1.5 (2021-06-03) [(Commit)](https://github.com/llamasking/sourcemod-plugins/commit/f4689cf3d5a55588db8f79dd6d05b2571a295be6)
 
 - Translation fixes.
 
