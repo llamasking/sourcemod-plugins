@@ -27,7 +27,7 @@
 #pragma newdecls required
 
 //#define DEBUG
-#define VERSION    "1.1.9"
+#define VERSION    "1.1.10"
 #define UPDATE_URL "https://raw.githubusercontent.com/llamasking/sourcemod-plugins/master/Plugins/wsvote/updatefile.txt"
 
 #if !defined DEBUG
@@ -206,7 +206,7 @@ public void UpdateCurrentMapCallback(Handle req, bool failure, bool requestSucce
 // Notify Functionality
 public void OnClientPutInServer(int client)
 {
-    if (GetConVarBool(g_notify) && !IsFakeClient(client))
+    if (GetConVarBool(g_notify) && IsClientValid(client))
         CreateTimer(GetConVarFloat(g_notifydelay), Timer_NotifyPlayer, GetClientUserId(client));
 }
 
@@ -293,11 +293,20 @@ public void ReqCallback(Handle req, bool failure, bool requestSuccessful, EHTTPS
 
     int client = GetClientOfUserId(user_id);
 
+    // Check client is still valid
+    if (!IsClientValid(client))
+    {
+        delete req;
+        CloseHandle(pack);
+        return;
+    }
+
     if (failure || !requestSuccessful || statusCode != k_EHTTPStatusCode200OK)
     {
         CPrintToChat(client, "{gold}[Workshop]{default} %t", "WsVote_CallVote_ApiFailure");
         LogError("Error on request for id: '%s'", map_id);
         delete req;    // See notice below.
+        CloseHandle(pack);
         return;
     }
 
@@ -410,7 +419,15 @@ public int Nv_Vote(NativeVote vote, MenuAction action, int param1, int param2)
 
                 float delay = GetConVarFloat(g_mapchange_delay);
 
-                PrintHintText(GetClientOfUserId(user_id), "%t", "WsVote_CallVote_FailWarning");
+                // Warn the person who initiated the vote that sometimes the map fails to change
+                // I'm not 100% certain why this happens but it looks to be downloads failing for some reason.
+                // Either way, warn them so that they know to give it a second try if it happens.
+                //
+                // I also think its fine if they left or leave after this point, too, since the vote passed.
+                int initiator_client = GetClientOfUserId(user_id);
+                if (IsClientValid(initiator_client))
+                    PrintHintText(initiator_client, "%t", "WsVote_CallVote_FailWarning");
+
                 CPrintToChatAll("{gold}[Workshop]{default} %t", "WsVote_CallVote_VotePass", map_name, RoundToNearest(delay));
 
 #if !defined DEBUG
