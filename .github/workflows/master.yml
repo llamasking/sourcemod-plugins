@@ -27,6 +27,6 @@ jobs:
           for file in $(find -type f -name "*.sp")
           do
             echo -e "\nCompiling $file..."
-            spcomp64 -v2 -iinclude $file
+            spcomp64 -v2 -i "${{ github.workspace }}/include" "$file"
           done
         working-directory: ${{ env.SCRIPTS_PATH }}
