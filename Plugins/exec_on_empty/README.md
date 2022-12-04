@@ -2,6 +2,10 @@
 
 ## Changelog
 
+v1.7.3 (2022-12-04) [(Latest)]()
+
+- Coding changes.
+
 v1.7.2 (2020-09-12) [(Commit)](https://github.com/llamasking/sourcemod-plugins/commit/2727e5c5b415805e849269033ce06925e5555326)
 
 - Fix variable names so now it compiles

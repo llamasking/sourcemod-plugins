@@ -4,26 +4,29 @@
 #pragma newdecls required
 #pragma semicolon 1
 
-#define MAX_ID_STRING 6
-#define VERSION "1.7.2"
 //#define DEBUG
+#define MAX_ID_STRING 6
+#define VERSION       "1.7.3"
 
 public Plugin myinfo =
 {
-    name = "Execute on Empty",
-    author = "llamasking",
+    name        = "Execute on Empty",
+    author      = "llamasking",
     description = "Executes a config whenever the server is empty.",
-    version = VERSION,
-    url = "https://github.com/llamasking/sourcemod-plugins",
+    version     = VERSION,
+    url         = "https://github.com/llamasking/sourcemod-plugins",
+
+
 }
 
-ConVar g_enabled; // Whether or not the plugin is on
-ConVar g_config;  // Config file to load
+ConVar g_enabled;    // Whether or not the plugin is on
+ConVar g_config;     // Config file to load
 
-int g_players;                   // Player count
-Handle g_clients;                // List of clients connected
-Handle g_timer = INVALID_HANDLE; // Timer to exec config everyone leaves
+int    g_players;                   // Player count
+Handle g_clients;                   // List of clients connected
+Handle g_timer = INVALID_HANDLE;    // Timer to exec config everyone leaves
 
+//
 public void OnPluginStart()
 {
     // Create ConVars
@@ -95,10 +98,12 @@ public void OnMapEnd()
 public Action ExecCfg(Handle timer)
 {
     if (!GetConVarBool(g_enabled))
-        return;
+        return Plugin_Stop;
 
     char cfg[PLATFORM_MAX_PATH];
 
     GetConVarString(g_config, cfg, sizeof(cfg));
     ServerCommand("exec \"%s\"", cfg);
+
+    return Plugin_Stop;
 }
