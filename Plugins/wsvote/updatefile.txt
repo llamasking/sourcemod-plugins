@@ -4,11 +4,10 @@
 	{
 		"Version"
 		{
-			"Latest"	"1.1.10"
+			"Latest"	"1.2.0"
 		}
 
-		"Notes"	"Minor improvements to prevent some possible errors and memory leaks."
-		"Notes"	"See: https://github.com/llamasking/sourcemod-plugins/commits/master/Plugins/wsvote"
+		"Notes"	"Allow users to send the map link instead of the id itself. The plugin will try to find the id in the link."
 	}
 
 	"Files"

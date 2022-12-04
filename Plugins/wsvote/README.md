@@ -2,6 +2,25 @@
 
 ## Changelog
 
+v1.2.0 (2022-12-04) [(Latest)]()
+
+- Allow users to send the map link instead of the id itself. The plugin will try to find the id in the link.
+
+v1.1.10 (2022-09-05) [(Commit)](https://github.com/llamasking/sourcemod-plugins/commit/402ab06285f80b56c0116d95f16b7114b8b61bbc)
+
+- A few more checks in place to prevent possible runtime errors
+- Fix possible memory leak
+
+v1.1.9 (2022-09-05) [(Commit)](https://github.com/llamasking/sourcemod-plugins/commit/9baf174e5d5384e78b90245a0c19f46a7876b11f)
+
+- Better map id checking
+- (Slightly) smarter code
+  - Replaced the use of global vars wherever possible.
+  - Wherever possible, data is now sent between functions through a datapack
+  - More use of methodmaps rather than directly using older APIs
+  - Close handle leak that could occur if wsvote was called as another vote was active.
+  - Removed unnecessary `client` var being passed to `CReplyToCommand
+
 v1.1.8 (2021-08-19) [(Commit)](https://github.com/llamasking/sourcemod-plugins/commit/8b2aa4bc047b489b9b7b42a7428bf5ea8638d41b)
 
 - Fix a minor error if a player leaves before getting a map notification.

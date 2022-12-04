@@ -1,7 +1,7 @@
 /**
  * ======================================================================
  * Workshop Map Vote
- * Copyright (C) 2020-2021 llamasking
+ * Copyright (C) 2020-2022 llamasking
  * ======================================================================
  *
  * This program is free software: you can redistribute it and/or modify
@@ -27,7 +27,7 @@
 #pragma newdecls required
 
 //#define DEBUG
-#define VERSION    "1.1.10"
+#define VERSION    "1.2.0"
 #define UPDATE_URL "https://raw.githubusercontent.com/llamasking/sourcemod-plugins/master/Plugins/wsvote/updatefile.txt"
 
 #if !defined DEBUG
@@ -48,6 +48,9 @@ public Plugin myinfo =
 
 /* This is a datapack that contains information on the active vote and is only ever set while a vote is active. */
 DataPack g_active_vote_info = null;
+
+/* Regex to get map ID out of url */
+Regex r_get_map_id = null;
 
 /* ConVars */
 ConVar g_minsubs;
@@ -82,6 +85,15 @@ public void OnPluginStart()
     g_mapchange_delay = CreateConVar("sm_workshop_delay", "10", "The delay between the vote passing and the map changing.", _, true, 0.0);
     g_notify          = CreateConVar("sm_workshop_notify", "1", "Whether or not to notify joining players about the map's Workshop name and ID.'", _, true, 0.0, true, 1.0);
     g_notifydelay     = CreateConVar("sm_workshop_notify_delay", "60", "How many seconds to wait after a client joins before notifying them.'", _, true, 0.0);
+
+    // Compile regex
+    char error[256];
+    r_get_map_id = new Regex("^https?://(www\\.)?steamcommunity\\.com/sharedfiles/filedetails/.*[?&]id=(\\d+)", PCRE_CASELESS, error, sizeof(error));
+    if (strlen(error) != 0)
+    {
+        LogError(error);
+        r_get_map_id = null;
+    }
 
     // Load config values.
     AutoExecConfig();
@@ -220,6 +232,8 @@ public Action Timer_NotifyPlayer(Handle timer, any userid)
     // Ignore if the player left and all that good shit
     if (!g_cmap_stock && IsClientValid(client))
         CPrintToChat(client, "{gold}[Workshop]{default} %t", "WsVote_CurrentMap_Workshop", g_cmap_name, g_cmap_id);
+
+    return Plugin_Handled;
 }
 
 // Current Map Command
@@ -251,9 +265,20 @@ public Action Command_WsVote(int client, int args)
     }
 
     // Get workshop map id and ignore if none is given.
-    char map_id[16];
-    GetCmdArg(1, map_id, sizeof(map_id));
-    if (StringToInt(map_id) == 0)    // Map ID must be string (integer overflows) but this works to test if its a valid int
+    char map_id[128];
+    GetCmdArg(1, map_id, sizeof(map_id));                            // Gets first arg of command
+    if (StrContains(map_id, "http") == 0 && r_get_map_id != null)    // Find the id if the arg appears to be a url
+    {
+#if defined DEBUG
+        CPrintToChatAll("%i", r_get_map_id);
+        CPrintToChatAll("%i", r_get_map_id.Match(map_id));
+#endif
+        r_get_map_id.GetSubString(1, map_id, sizeof(map_id));
+    }
+
+    // Map ID must be a string because StringToInt(map_id) will overflow,
+    // but this works to test if the map_id string is a number.
+    if (StringToInt(map_id) == 0)
     {
         CReplyToCommand(client, "{gold}[Workshop]{default} %t", "WsVote_CallVote_NoId");
         return Plugin_Handled;
@@ -462,6 +487,8 @@ public int Nv_Vote(NativeVote vote, MenuAction action, int param1, int param2)
                                           // Just null out the global reference. (The timer has its own reference.)
         }
     }
+
+    return 0;
 }
 
 public Action Timer_ChangeLevel(Handle timer, DataPack pack)
@@ -477,6 +504,7 @@ public Action Timer_ChangeLevel(Handle timer, DataPack pack)
     CloseHandle(pack);                          // Close pack once it is no longer needed.
 
     ServerCommand("changelevel \"workshop/%s\"", map_id);
+    return Plugin_Handled;
 }
 
 bool IsClientValid(int client)
