@@ -2,6 +2,10 @@
 
 ## Changelog
 
+v1.1.4 (2022-12-04) [(Latest)]()
+
+- Coding changes.
+
 v1.1.3 (2022-08-22) [(Commit)](https://github.com/llamasking/sourcemod-plugins/commit/462be598b77e9e6e5b30dc0285f696c1fd62647b)
 
 - Fix some map names not displaying fully

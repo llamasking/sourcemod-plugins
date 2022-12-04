@@ -20,7 +20,7 @@
 #pragma semicolon 1
 #include <sourcemod>
 
-#define VERSION "1.1.3"
+#define VERSION "1.1.4"
 
 public Plugin myinfo =
 {
@@ -129,4 +129,6 @@ public Action UpdateHostname(Handle timer)
         // Finally, update the hostname.
         ServerCommand("hostname \"%s\"", hostname);
     }
+
+    return Plugin_Stop;
 }
