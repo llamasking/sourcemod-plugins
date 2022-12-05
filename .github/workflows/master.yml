@@ -30,3 +30,9 @@ jobs:
             spcomp64 -v2 -i "${{ github.workspace }}/include" "$file"
           done
         working-directory: ${{ env.SCRIPTS_PATH }}
+
+      - name: Upload Compiled Plugins
+        uses: actions/upload-artifact@v3
+        with:
+          name: plugins
+          path: ./*.smx
