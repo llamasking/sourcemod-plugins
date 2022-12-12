@@ -2,7 +2,12 @@
 
 ## Changelog
 
-v1.2.0 (2022-12-04) [(Latest)]()
+v1.2.0-1 (2022-12-04) [(Latest)]()
+
+- Recompile to be sure it's not mistakenly in debug mode.
+- Translation fix.
+
+v1.2.0 (2022-12-04) [(Commit)](https://github.com/llamasking/sourcemod-plugins/commit/b2035a8711443369fc6170f85b7044f9d4f7414b)
 
 - Allow users to send the map link instead of the id itself. The plugin will try to find the id in the link.
 

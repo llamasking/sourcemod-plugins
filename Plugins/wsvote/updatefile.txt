@@ -4,10 +4,10 @@
 	{
 		"Version"
 		{
-			"Latest"	"1.2.0"
+			"Latest"	"1.2.0-1"
 		}
 
-		"Notes"	"Allow users to send the map link instead of the id itself. The plugin will try to find the id in the link."
+		"Notes"	"Translation fix."
 	}
 
 	"Files"

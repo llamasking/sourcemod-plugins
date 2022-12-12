@@ -27,7 +27,7 @@
 #pragma newdecls required
 
 //#define DEBUG
-#define VERSION    "1.2.0"
+#define VERSION    "1.2.0-1"
 #define UPDATE_URL "https://raw.githubusercontent.com/llamasking/sourcemod-plugins/master/Plugins/wsvote/updatefile.txt"
 
 #if !defined DEBUG
