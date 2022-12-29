@@ -455,9 +455,7 @@ public int Nv_Vote(NativeVote vote, MenuAction action, int param1, int param2)
 
                 CPrintToChatAll("{gold}[Workshop]{default} %t", "WsVote_CallVote_VotePass", map_name, RoundToNearest(delay));
 
-#if !defined DEBUG
                 CreateTimer(delay, Timer_ChangeLevel, pack);
-#endif
             }
             else
             {
@@ -503,7 +501,10 @@ public Action Timer_ChangeLevel(Handle timer, DataPack pack)
     pack.ReadString(map_id, sizeof(map_id));    // Cell 2: Map ID as a string
     CloseHandle(pack);                          // Close pack once it is no longer needed.
 
+#if !defined DEBUG
     ServerCommand("changelevel \"workshop/%s\"", map_id);
+#endif
+
     return Plugin_Handled;
 }
 
