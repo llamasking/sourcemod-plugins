@@ -8,7 +8,11 @@ Further note: Usernames, SteamIDs, and IPs are **never** sent to the database. T
 
 ## Changelog
 
-v1.0.1 (2021-05-30) [(Latest)]()
+v1.0.2 (2022-12-29) [(Commit)](https://github.com/llamasking/sourcemod-plugins/commit/f003000432c1a48474a0ecbd1865c006b10dbc6d)
+
+- Fix a 'Client X is not connected' exception.
+
+v1.0.1 (2021-05-30) [(Commit)](https://github.com/llamasking/sourcemod-plugins/commit/7d12a2bc25f1c531f1f440bd27c7b9a22dbef48c)
 
 - Fixed player counts only the first digit
 - Increase max length of a country name to 63 characters
