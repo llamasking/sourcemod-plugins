@@ -1,7 +1,7 @@
 /**
  * ======================================================================
  * Private Analytics
- * Copyright (C) 2020-2021 llamasking
+ * Copyright (C) 2020-2022 llamasking
  * ======================================================================
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,39 +20,41 @@
 /* -- Data Logging --
 When a player joins, the 'player_analytics' table is updated with the following.
 - Server IP
-- Unix Timestamp
-- Player Count
-- Map
-- Country
-- If HTML Motds are blocked (off by default)
+- Timestamp
+- Total Player Count
+- Current Map
+- Player's Country
+- If the player blocks HTML MOTDs (only stored if this option is enabled and the player is successful queried, otherwise NULL)
 
 When a player EITHER joins OR leaves, the 'player_count' table is updated with the following.
 - Server IP
-- Unix Timestamp
-- Player Count
-- Map
+- Timestamp
+- Total Player Count
+- Current Map
 */
 
 // This plugin is made to fit my needs. If it does not fit yours, that is not my problem.
 
 #pragma semicolon 1
 #pragma newdecls required
-#include <sourcemod>
+
 #include <geoip>
+#include <sourcemod>
 #undef REQUIRE_PLUGIN
 #include <updater>
 
-#define VERSION "1.0.1"
 //#define DEBUG
+#define VERSION    "1.0.2"
 #define UPDATE_URL "https://raw.githubusercontent.com/llamasking/sourcemod-plugins/master/Plugins/private_analytics/updatefile.txt"
-
 public Plugin myinfo =
 {
-    name = "Private Analytics",
-    author = "llamasking",
+    name        = "Private Analytics",
+    author      = "llamasking",
     description = "An alternative to Dr. McKay's Player Analytics that logs much less identifiable information.",
-    version = VERSION,
-    url = "https://github.com/llamasking/sourcemod-plugins"
+    version     = VERSION,
+    url         = "https://github.com/llamasking/sourcemod-plugins"
+
+
 }
 
 /* ConVars */
@@ -73,12 +75,12 @@ public void OnPluginStart()
 
     AutoExecConfig();
 
-    if(!SQL_CheckConfig("priv_analytics"))
+    if (!SQL_CheckConfig("priv_analytics"))
         SetFailState("Database 'priv_analytics' not found in databases.cfg!");
 
     // Get server ip and store it globally so that it doesn't have to be redetermined each time someone connects.
     int ip = GetConVarInt(FindConVar("hostip"));
-    Format(g_ip, sizeof(g_ip), "%d.%d.%d.%d:%d", ((ip & 0xFF000000) >> 24) & 0xFF, ((ip & 0x00FF0000) >> 16) & 0xFF, ((ip & 0x0000FF00) >>  8) & 0xFF, ((ip & 0x000000FF) >>  0) & 0xFF, GetConVarInt(FindConVar("hostport")));
+    Format(g_ip, sizeof(g_ip), "%d.%d.%d.%d:%d", ((ip & 0xFF000000) >> 24) & 0xFF, ((ip & 0x00FF0000) >> 16) & 0xFF, ((ip & 0x0000FF00) >> 8) & 0xFF, ((ip & 0x000000FF) >> 0) & 0xFF, GetConVarInt(FindConVar("hostport")));
 
     // Get map
     GetCurrentMap(g_map, sizeof(g_map));
@@ -87,17 +89,18 @@ public void OnPluginStart()
     // Create tables if it doesn't already exist.
     Database.Connect(ConnectCallback, "priv_analytics");
 
-    // Updater
-    #if !defined DEBUG
+// Updater
+#if !defined DEBUG
     if (LibraryExists("updater"))
     {
         Updater_AddPlugin(UPDATE_URL);
     }
-    #endif
+#endif
 }
 
 /* Updater */
 #if !defined DEBUG
+
 public void OnLibraryAdded(const char[] name)
 {
     if (StrEqual(name, "updater"))
@@ -105,12 +108,13 @@ public void OnLibraryAdded(const char[] name)
         Updater_AddPlugin(UPDATE_URL);
     }
 }
+
 #endif
 
 /* Connect and Disconnect */
 public void OnClientPutInServer(int client)
 {
-    if(GetConVarBool(g_html))
+    if (GetConVarBool(g_html))
     {
         QueryClientConVar(client, "cl_disablehtmlmotd", QueryCallback);
     }
@@ -128,8 +132,8 @@ public void OnClientDisconnect_Post(int client)
 /* Functions */
 void InsertConnection(int client, const char[] htmlStatus, bool nullHtml = false)
 {
-    // Ignore fake clients, but only when they're connecting.
-    if(IsFakeClient(client))
+    // Ignore fake clients and those that managed to leave before the query finished.
+    if (!IsClientConnected(client) || IsFakeClient(client))
         return;
 
     // Get country
@@ -146,25 +150,21 @@ void InsertConnection(int client, const char[] htmlStatus, bool nullHtml = false
     // Assume it is blocked unless the convar explicitly returns "0".
     // Status is NULL if the feature is disabled or convar query failed.
     char html[5] = "1";
-    if(nullHtml)
-    {
-        html = "NULL";
-    }
-    else if(StrEqual(htmlStatus, "0"))
-    {
-        html = "0";
-    }
+    if (nullHtml)
+        strcopy(html, sizeof(html), "NULL");
+    else if (StrEqual(htmlStatus, "0"))
+        strcopy(html, sizeof(html), "0");
 
     // Query
     char query[512];
     g_db.Format(query, sizeof(query), "INSERT INTO `player_analytics` SET server_ip = '%s', connect_time = '%i', numplayers = '%i', map = '%s', country = '%s', country_code = '%s', country_code3 = '%s', html_motd_disabled = %s;",
-        g_ip, GetTime(), GetPlayerCount(), g_map, country, country_code, country_code3, html);
+                g_ip, GetTime(), GetPlayerCount(), g_map, country, country_code, country_code3, html);
 
-    #if defined DEBUG
+#if defined DEBUG
     LogMessage("%s", query);
-    #else
+#else
     g_db.Query(SQLCallback, query);
-    #endif
+#endif
 
     // Update player count table as well.
     UpdatePlayerCount();
@@ -175,20 +175,21 @@ public void UpdatePlayerCount()
     // Query
     char query[512];
     g_db.Format(query, sizeof(query), "INSERT INTO `player_count` SET server_ip = '%s', time = '%i', numplayers = '%i', map = '%s';",
-        g_ip, GetTime(), GetPlayerCount(), g_map);
-    #if defined DEBUG
+                g_ip, GetTime(), GetPlayerCount(), g_map);
+#if defined DEBUG
     LogMessage("%s", query);
-    #else
+#else
     g_db.Query(SQLCallback, query);
-    #endif
+#endif
 }
 
-public int GetPlayerCount() {
+public int GetPlayerCount()
+{
     int players = 0;
 
-    for(int i = 1; i <= MaxClients; i++)
+    for (int i = 1; i <= MaxClients; i++)
     {
-        if(IsClientConnected(i) && !IsFakeClient(i))
+        if (IsClientConnected(i) && !IsFakeClient(i))
             players++;
     }
 
@@ -198,7 +199,7 @@ public int GetPlayerCount() {
 /* Callbacks */
 public void ConnectCallback(Database db, const char[] error, any data)
 {
-    if(db == null)
+    if (db == null)
         SetFailState("Could not connect to database: %s", error);
 
     g_db = db;
@@ -218,11 +219,11 @@ public void SQLCallback(Database db, DBResultSet results, const char[] error, an
 public void QueryCallback(QueryCookie cookie, int client, ConVarQueryResult result, const char[] cvarName, const char[] cvarValue)
 {
     // If query failed, send NULL
-    if(result == ConVarQuery_Okay)
+    if (result == ConVarQuery_Okay)
     {
         InsertConnection(client, cvarValue);
     }
-    else
+    else if (result != ConVarQuery_Cancelled)
     {
         InsertConnection(client, "", true);
     }
