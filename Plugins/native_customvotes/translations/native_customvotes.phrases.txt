@@ -1,0 +1,7 @@
+"Phrases"
+{
+    "NCVote_ExistingVote"
+    {
+        "en"    "{gold}[Custom Votes]{default} A vote is already in progress."
+    }
+}

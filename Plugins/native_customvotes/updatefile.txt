@@ -1,0 +1,20 @@
+"Updater"
+{
+	"Information"
+	{
+		"Version"
+		{
+			"Latest"	"0.0.1"
+		}
+
+		"Notes"	"Initial release."
+	}
+
+	"Files"
+	{
+		"Plugin"	"Path_SM/plugins/native_customvotes.smx"
+		"Plugin"	"Path_SM/translations/native_customvotes.phrases.txt"
+
+		"Source"	"Path_SM/scripting/native_customvotes.sp"
+	}
+}
