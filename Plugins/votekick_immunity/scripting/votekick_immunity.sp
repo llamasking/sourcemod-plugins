@@ -30,6 +30,7 @@
  * Version: $Id$
  */
 
+#include <multicolors>
 #include <sourcemod>
 
 //#define DEBUG
@@ -38,11 +39,11 @@
 
 public Plugin myinfo =
 {
-    name = "Votekick Immunity",
-    author = "psychoninc & llamasking",
+    name        = "Votekick Immunity",
+    author      = "psychoninc & llamasking",
     description = "Causes TF2 player kick votes to obey SM immunity levels",
-    version = "1.3",
-    url = "http://nicholashastings.com"
+    version     = "1.4",
+    url         = "http://nicholashastings.com"
 }
 
 int min(int a, int b) { return (((a) < (b)) ? (a) : (b)); }
@@ -86,7 +87,7 @@ public Action callvote(int client, const char[] cmd, int argc)
     PrintToChatAll("[DEBUG] Vote arg 2: %s", theRest);
     #endif
 
-    int userId = 0;
+    int userId   = 0;
     int spacePos = FindCharInString(theRest, ' ');
     if (spacePos > -1)
     {
@@ -119,10 +120,10 @@ public Action callvote(int client, const char[] cmd, int argc)
     }
 
     // Check if target is acceptable.
-    AdminId clientAdmin = GetUserAdmin(client);
+    AdminId callerAdmin = GetUserAdmin(client);
     AdminId targetAdmin = GetUserAdmin(target);
 
-    if (clientAdmin == INVALID_ADMIN_ID && targetAdmin == INVALID_ADMIN_ID)
+    if (callerAdmin == INVALID_ADMIN_ID && targetAdmin == INVALID_ADMIN_ID)
     {
         #if defined DEBUG
         PrintToChatAll("[DEBUG] Initiator and target are both non-admins. Vote continuing.");
@@ -131,7 +132,7 @@ public Action callvote(int client, const char[] cmd, int argc)
         return Plugin_Continue;
     }
 
-    if (CanAdminTarget(clientAdmin, targetAdmin))
+    if (CanAdminTarget(callerAdmin, targetAdmin))
     {
         #if defined DEBUG
         PrintToChatAll("[DEBUG] Initiator can target. Vote continuing.");
@@ -142,6 +143,7 @@ public Action callvote(int client, const char[] cmd, int argc)
 
     // Log blocked votekicks
     LogMessage("User '%L' attempted to votekick '%L' but was blocked.", client, target);
+    CPrintToChat(target, "{fullred}[Immunity]{default} User '%L' attempted to votekick you but was blocked.", client);
 
     return Plugin_Handled;
 }
