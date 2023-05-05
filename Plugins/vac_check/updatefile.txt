@@ -1,0 +1,19 @@
+"Updater"
+{
+	"Information"
+	{
+		"Version"
+		{
+			"Latest"	"0.0.1"
+		}
+
+		"Notes"	"Initial release."
+	}
+
+	"Files"
+	{
+		"Plugin"	"Path_SM/plugins/vac_check.smx"
+
+		"Source"	"Path_SM/scripting/vac_check.sp"
+	}
+}
