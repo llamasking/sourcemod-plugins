@@ -35,6 +35,6 @@ v0.0.2 (2023-09-22) [(Latest)]()
 - Simplify ConVars.
 - Correct banning logic.
 
-v0.0.1 (2023-05-05) [(Commit)](d341334abbb0d3961eb085866e9124e15efaedec)
+v0.0.1 (2023-05-05) [(Commit)](https://github.com/llamasking/sourcemod-plugins/commit/d341334abbb0d3961eb085866e9124e15efaedec)
 
 - Initial release.
