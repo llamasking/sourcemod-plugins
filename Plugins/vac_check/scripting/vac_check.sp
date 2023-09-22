@@ -24,7 +24,7 @@
 #include <sourcemod>
 
 //#define DEBUG
-#define VERSION    "0.0.1"
+#define VERSION    "0.0.2"
 #define UPDATE_URL "https://raw.githubusercontent.com/llamasking/sourcemod-plugins/master/Plugins/vac_check/updatefile.txt"
 
 #if !defined DEBUG
@@ -40,8 +40,7 @@
 /* ConVars */
 ConVar g_apiKey;
 ConVar g_vacMaxAge;
-ConVar g_vacMaxCount;
-ConVar g_gameMaxCount;
+ConVar g_maxBanCount;
 ConVar g_banLength;
 
 /* Global Vars */
@@ -60,11 +59,10 @@ public void
 OnPluginStart()
 {
     CreateConVar("sm_vac_version", VERSION, "VAC Check version.", FCVAR_NOTIFY | FCVAR_DONTRECORD);
-    g_apiKey       = CreateConVar("sm_vac_api_key", "", "Your Steam Web API Key", FCVAR_PROTECTED);
-    g_vacMaxAge    = CreateConVar("sm_vac_max_age", "2555", "The minumum age (in days) of a ban (VAC or game) before it is forgiven. 0 = Never.", FCVAR_PROTECTED, true, 0.0);
-    g_vacMaxCount  = CreateConVar("sm_vac_max_bans", "2", "The number of VAC bans an account at which max age is ignored (always bans).", FCVAR_PROTECTED, true, 0.0);
-    g_gameMaxCount = CreateConVar("sm_vac_max_game_bans", "2", "The number of game bans an account at which max age is ignored (always bans).", FCVAR_PROTECTED, true, 0.0);
-    g_banLength    = CreateConVar("sm_vac_ban_length", "-1", "Time to ban VAC/game banned accounts for. (In days, -1 = until 'max age', 0 = permanent)", FCVAR_PROTECTED, true, -1.0);
+    g_apiKey      = CreateConVar("sm_vac_api_key", "", "Your Steam Web API Key", FCVAR_PROTECTED);
+    g_vacMaxAge   = CreateConVar("sm_vac_max_age", "2555", "The minimum age (in days) of a VAC/game ban before it is forgiven. (0 = Never)", FCVAR_PROTECTED, true, 0.0);
+    g_maxBanCount = CreateConVar("sm_vac_max_bans", "2", "The maximum forgivable number of old bans.", FCVAR_PROTECTED, true, 0.0);
+    g_banLength   = CreateConVar("sm_vac_ban_length", "-1", "Duration of server ban for VAC'd accounts. (In days. -1 = until 'max age', 0 = permanent)", FCVAR_PROTECTED, true, -1.0);
 
     AutoExecConfig();
 }
@@ -151,14 +149,14 @@ public void BanCheckCallback(Handle req, bool failure, bool requestSuccessful, E
     int vBanCnt = kv.GetNum("NumberOfVACBans");
     int gBanCnt = kv.GetNum("NumberOfGameBans");
     int banAge  = kv.GetNum("DaysSinceLastBan");
+    int tBanCnt = vBanCnt + gBanCnt;
 
     // Figure out some things
     bool hasVacBan   = vBanCnt != 0;
     bool hasGameBan  = gBanCnt != 0;
     bool hasAnyBan   = hasVacBan || hasGameBan;
-    bool tooManyVac  = vBanCnt >= g_vacMaxCount.IntValue;           // Too many bans for forgiveness
-    bool tooManyGame = gBanCnt >= g_gameMaxCount.IntValue;          // Too many bans for forgiveness
-    bool bansAreNew  = hasAnyBan && banAge < g_vacMaxAge.IntValue;  // Bans are old enough to be forgiven
+    bool tooManyBans = tBanCnt > g_maxBanCount.IntValue;             // Too many bans for forgiveness
+    bool bansAreNew  = hasAnyBan && banAge <= g_vacMaxAge.IntValue;  // Bans are old enough to be forgiven
     if (g_vacMaxAge.IntValue == 0)
         bansAreNew = hasAnyBan;  // If forgiveness is disabled
 
@@ -169,12 +167,16 @@ public void BanCheckCallback(Handle req, bool failure, bool requestSuccessful, E
 #endif
 
     // If the user has a ban and is not forgivable, ban them.
-    if (hasAnyBan && !tooManyVac && !tooManyGame && bansAreNew)
+    if (hasAnyBan && (tooManyBans || bansAreNew))
     {
-        int banDuration = g_banLength.IntValue == -1             // Calculate ban length
-                              ? (g_vacMaxAge.IntValue - banAge)  // Until Max Age
-                              : g_banLength.IntValue;            // As set by ConVar
-        banDuration *= 1440;                                     // Convert days to minutes
+        // Calculate ban length
+        int banDuration = g_banLength.IntValue;             // Default to ban duration set in convar
+        if (g_banLength.IntValue == -1)                     // If convar is set to "until 'max age'", calculate how long until
+            banDuration = (g_vacMaxAge.IntValue - banAge);  // the vac/game ban is forgivable.
+        else if (tooManyBans)                               // However, if the player has too many bans to be forgivable,
+            banDuration = 0;                                // they are permanently banned.
+
+        banDuration *= 1440;  // Convert days to minutes
 
 #if !defined DEBUG
         char reason[] = "[VAC Check] VAC banned accounts are not permitted on this server.";
