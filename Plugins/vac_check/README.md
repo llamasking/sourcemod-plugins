@@ -29,6 +29,11 @@ Accounts which do not fall under the above criteria receive a server ban. The du
 
 ## Changelog
 
+v0.0.3 (2023-09-23) [(Latest)]()
+
+- Correct plugin not permanently banning if a player has too many vac/game bans to ever be forgivable.
+- Write bans to log file.
+
 v0.0.2 (2023-09-22) [(Latest)]()
 
 - Add documentation.

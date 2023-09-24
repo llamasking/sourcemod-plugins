@@ -24,7 +24,7 @@
 #include <sourcemod>
 
 //#define DEBUG
-#define VERSION    "0.0.2"
+#define VERSION    "0.0.3"
 #define UPDATE_URL "https://raw.githubusercontent.com/llamasking/sourcemod-plugins/master/Plugins/vac_check/updatefile.txt"
 
 #if !defined DEBUG
@@ -91,9 +91,9 @@ public void OnClientAuthorized(int client, const char[] auth)
 #if defined DEBUG
     // Random banned accounts since I don't have a banned acc handy.
     // strcopy(steamId, sizeof(steamId), "76561198262728767");    // 1 VAC and 1 Game Ban (Recent)
-    // strcopy(steamId, sizeof(steamId), "76561198126615320");    // 1 Game Ban (Recent)
+    // strcopy(steamId, sizeof(steamId), "76561199441703051");    // 1 Game Ban (Recent)
     // strcopy(steamId, sizeof(steamId), "76561198035091056");    // 2 Vac Bans (Recent)
-    // strcopy(steamId, sizeof(steamId), "76561199236258744");    // 1 Vac Ban Recent)
+    // strcopy(steamId, sizeof(steamId), "76561199236258744");    // 1 Vac Ban (Recent)
 
     LogMessage("Sending VAC check for client: %N (%s)", client, steamId);
 #endif
@@ -139,11 +139,20 @@ public void BanCheckCallback(Handle req, bool failure, bool requestSuccessful, E
     SteamWorks_GetHTTPResponseBodyData(req, data, respSize);
 
     // Turn response into keyvalues.
+    bool success = true;
     KeyValues kv = new KeyValues("response");
     kv.SetEscapeSequences(true);
-    kv.ImportFromString(data);
-    kv.JumpToKey("players");
-    kv.JumpToKey("0");
+    success &= kv.ImportFromString(data);
+    success &= kv.JumpToKey("players");
+    success &= kv.JumpToKey("0");
+
+    if (!success)
+    {
+        LogError("Failed to parse KeyValues for '%L'", client);
+        delete req;
+        delete kv;
+        return;
+    }
 
     // Get data from KV
     int vBanCnt = kv.GetNum("NumberOfVACBans");
@@ -156,14 +165,14 @@ public void BanCheckCallback(Handle req, bool failure, bool requestSuccessful, E
     bool hasGameBan  = gBanCnt != 0;
     bool hasAnyBan   = hasVacBan || hasGameBan;
     bool tooManyBans = tBanCnt > g_maxBanCount.IntValue;             // Too many bans for forgiveness
-    bool bansAreNew  = hasAnyBan && banAge <= g_vacMaxAge.IntValue;  // Bans are old enough to be forgiven
+    bool bansAreNew  = hasAnyBan && banAge <= g_vacMaxAge.IntValue;  // Bans too new
     if (g_vacMaxAge.IntValue == 0)
         bansAreNew = hasAnyBan;  // If forgiveness is disabled
 
 #if defined DEBUG
     LogMessage("%L: hasVacBan: %i, hasGameBan: %i, hasAnyBan: %i", client, hasVacBan, hasGameBan, hasAnyBan);
     LogMessage("%L: NumberOfVACBans: %i, NumberOfGameBans: %i, DaysSinceLastBan: %i", client, vBanCnt, gBanCnt, banAge);
-    LogMessage("%L: tooManyVac: %i, tooManyGame: %i, bansAreNew: %i", client, tooManyVac, tooManyGame, bansAreNew);
+    LogMessage("%L: tooManyBans: %i, bansAreNew: %i", client, tooManyBans, bansAreNew);
 #endif
 
     // If the user has a ban and is not forgivable, ban them.
@@ -171,10 +180,10 @@ public void BanCheckCallback(Handle req, bool failure, bool requestSuccessful, E
     {
         // Calculate ban length
         int banDuration = g_banLength.IntValue;             // Default to ban duration set in convar
-        if (g_banLength.IntValue == -1)                     // If convar is set to "until 'max age'", calculate how long until
-            banDuration = (g_vacMaxAge.IntValue - banAge);  // the vac/game ban is forgivable.
-        else if (tooManyBans)                               // However, if the player has too many bans to be forgivable,
-            banDuration = 0;                                // they are permanently banned.
+        if (tooManyBans)                                    // If the player has too many bans to be forgivable, they are
+            banDuration = 0;                                // permanently banned.
+        else if (g_banLength.IntValue == -1)                // However, if they have a forgivable number of bans and the duration is until
+            banDuration = (g_vacMaxAge.IntValue - banAge);  // 'max age', calculate how long until the vac/game ban is forgivable.
 
         banDuration *= 1440;  // Convert days to minutes
 
@@ -184,6 +193,7 @@ public void BanCheckCallback(Handle req, bool failure, bool requestSuccessful, E
             SBPP_BanPlayer(0, client, banDuration, reason);
         else
             BanClient(client, banDuration, BANFLAG_AUTHID, reason, reason);
+        LogMessage("Banned '%L' for '%i' days.", client, banDuration / 1440);
 #else
         LogMessage("SourceBans is %s", g_bSourceBans ? "active" : "inactive");
         LogMessage("Would have banned '%L' for '%i' days.", client, banDuration / 1440);
