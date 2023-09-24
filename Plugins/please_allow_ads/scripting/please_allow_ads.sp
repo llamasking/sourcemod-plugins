@@ -16,19 +16,19 @@
 */
 
 #pragma semicolon 1
-#include <sourcemod>
 #include <multicolors>
+#include <sourcemod>
 
-#define VERSION "1.0.1"
+#define VERSION       "1.0.3"
 #define MAX_ID_STRING 6
 
 public Plugin myinfo =
 {
-    name = "Please Allow Ads",
-    author = "llamasking",
-    description = "A plugin that does nothing more than ask that players allow ads.",
-    version = VERSION,
-    url = "https://github.com/llamasking/sourcemod-plugins"
+        name        = "Please Allow Ads",
+        author      = "llamasking",
+        description = "A plugin that does nothing more than ask that players allow ads.",
+        version     = VERSION,
+        url         = "https://github.com/llamasking/sourcemod-plugins"
 }
 
 /* ConVars */
@@ -37,7 +37,7 @@ ConVar g_message;
 
 public void OnPluginStart()
 {
-    g_time = CreateConVar("sm_askads_time", "15", "The amount of time to wait before notifying the player.", _, true, 0.0);
+    g_time    = CreateConVar("sm_askads_time", "15", "The amount of time to wait before notifying the player.", _, true, 0.0);
     g_message = CreateConVar("sm_askads_message", "{yellow}[Ads]{default} This server is funded through advertisements. Please consider allowing html motds to support us.");
     CreateConVar("sm_askads_version", VERSION, "Plugin version.", FCVAR_DONTRECORD | FCVAR_NOTIFY);
 
@@ -46,22 +46,22 @@ public void OnPluginStart()
 
 public void OnClientPutInServer(int client)
 {
-    if(IsFakeClient(client))
+    if (IsFakeClient(client))
         return;
 
     // Ignore players with advertisement immunity.
-    if(!CheckCommandAccess(client, "MOTDGD_Immunity", ADMFLAG_RESERVATION))
+    if (!CheckCommandAccess(client, "MOTDGD_Immunity", ADMFLAG_RESERVATION))
         QueryClientConVar(client, "cl_disablehtmlmotd", QueryCallback);
 }
 
 public void QueryCallback(QueryCookie cookie, int client, ConVarQueryResult result, const char[] cvarName, const char[] cvarValue)
 {
     // Ignore if query failed.
-    if(result == ConVarQuery_Okay)
+    if (result == ConVarQuery_Okay)
     {
         // Timer to ask players with html motds off to turn them on.
         int val = StringToInt(cvarValue);
-        if(val == 1)
+        if (val == 1)
         {
             CreateTimer(GetConVarFloat(g_time), PleaseAllowAds, GetClientUserId(client));
         }
@@ -74,11 +74,13 @@ public Action PleaseAllowAds(Handle timer, any data)
     int client = GetClientOfUserId(data);
 
     // Prevent exception if client leaves before message is sent.
-    if (IsClientInGame(client))
+    if (client != 0 && IsClientInGame(client))
     {
         char msg[MAX_BUFFER_LENGTH];
         GetConVarString(g_message, msg, sizeof(msg));
 
         CPrintToChat(client, msg);
     }
+
+    return Plugin_Handled;
 }
