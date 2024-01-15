@@ -24,7 +24,7 @@
 #include <sourcemod>
 
 //#define DEBUG
-#define VERSION    "0.0.3"
+#define VERSION    "0.0.4"
 #define UPDATE_URL "https://raw.githubusercontent.com/llamasking/sourcemod-plugins/master/Plugins/vac_check/updatefile.txt"
 
 #if !defined DEBUG
@@ -125,6 +125,10 @@ public void BanCheckCallback(Handle req, bool failure, bool requestSuccessful, E
 {
     int client = GetClientOfUserId(userid);
 
+    // Client disconnected before the callback was called.
+    if (client == 0 || !IsClientConnected(client))
+        return;
+
     if (failure || !requestSuccessful || statusCode != k_EHTTPStatusCode200OK)
     {
         LogError("Error on VAC check for client: '%L'", client);
@@ -187,16 +191,15 @@ public void BanCheckCallback(Handle req, bool failure, bool requestSuccessful, E
 
         banDuration *= 1440;  // Convert days to minutes
 
-#if !defined DEBUG
+#if defined DEBUG
+        LogMessage("SourceBans is %s", g_bSourceBans ? "active" : "inactive");
+        LogMessage("Would have banned '%L' for '%i' days.", client, banDuration / 1440);
+#else
         char reason[] = "[VAC Check] VAC banned accounts are not permitted on this server.";
         if (g_bSourceBans)
             SBPP_BanPlayer(0, client, banDuration, reason);
-        else
-            BanClient(client, banDuration, BANFLAG_AUTHID, reason, reason);
+        BanClient(client, banDuration, BANFLAG_AUTO, reason, reason);
         LogMessage("Banned '%L' for '%i' days.", client, banDuration / 1440);
-#else
-        LogMessage("SourceBans is %s", g_bSourceBans ? "active" : "inactive");
-        LogMessage("Would have banned '%L' for '%i' days.", client, banDuration / 1440);
 #endif
     }
 

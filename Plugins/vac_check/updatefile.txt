@@ -4,10 +4,11 @@
 	{
 		"Version"
 		{
-			"Latest"	"0.0.2"
+			"Latest"	"0.0.4"
 		}
 
-		"Notes"	"Initial release."
+		"Notes"	"Prevent error if client leaves before VAC check finishes."
+		"Notes"	"Hopefully fix bans not banning."
 	}
 
 	"Files"

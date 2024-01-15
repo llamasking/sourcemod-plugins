@@ -29,12 +29,17 @@ Accounts which do not fall under the above criteria receive a server ban. The du
 
 ## Changelog
 
-v0.0.3 (2023-09-23) [(Latest)]()
+v0.0.4 (2024-01-15) [(Latest)]()
+
+- Prevent error if client leaves before VAC check finishes.
+- Hopefully fix bans not banning.
+
+v0.0.3 (2023-09-23) [(Commit)](https://github.com/llamasking/sourcemod-plugins/commit/83e8a3817df3b293d30ed3d1536a8c7197fc89b9)
 
 - Correct plugin not permanently banning if a player has too many vac/game bans to ever be forgivable.
 - Write bans to log file.
 
-v0.0.2 (2023-09-22) [(Latest)]()
+v0.0.2 (2023-09-22) [(Commit)](https://github.com/llamasking/sourcemod-plugins/commit/afcd2ed7fad0fe40960063730e78d93d1023088a)
 
 - Add documentation.
 - Simplify ConVars.
