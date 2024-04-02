@@ -4,11 +4,12 @@
 	{
 		"Version"
 		{
-			"Latest"	"0.0.4"
+			"Latest"	"0.0.5"
 		}
 
-		"Notes"	"Prevent error if client leaves before VAC check finishes."
-		"Notes"	"Hopefully fix bans not banning."
+		"Notes"	"Properly implement Updater support."
+		"Notes"	"Drop support for SourceBans++."
+		"Notes"	"Fix potential memory leak."
 	}
 
 	"Files"

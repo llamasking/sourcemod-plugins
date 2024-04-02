@@ -29,7 +29,15 @@ Accounts which do not fall under the above criteria receive a server ban. The du
 
 ## Changelog
 
-v0.0.4 (2024-01-15) [(Latest)]()
+v0.0.5 (2024-04-02) [(Latest)]()
+
+- Properly implement Updater.
+- Drop support for SourceBans++.
+  - SB++ requires that a client be fully in game to ban them. Since VAC checking execute rather early and pretty quickly, this means that in my experience, SB++ bans have never functioned. It is possible to implement a delay or loop ban attempts, but I consider those solutions to be a bit too hacky and too likely to introduce other issues.
+  - Users are still banned using the stock TF2 system, so the plugin remains useful. They just aren't saved to the SB++ database or otherwise integrated with SB++ in any way.
+- Fix potential memory leak and code cleanup.
+
+v0.0.4 (2024-01-15) [(Commit)](https://github.com/llamasking/sourcemod-plugins/commit/98844f9366fb731280bcc03cf85c9f592e61da4d)
 
 - Prevent error if client leaves before VAC check finishes.
 - Hopefully fix bans not banning.
