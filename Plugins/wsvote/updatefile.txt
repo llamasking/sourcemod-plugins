@@ -4,10 +4,12 @@
 	{
 		"Version"
 		{
-			"Latest"	"1.2.0-1"
+			"Latest"	"1.2.1"
 		}
 
-		"Notes"	"Translation fix."
+		"Notes"	"Fixed an issue where parsing a URL parsing would error."
+		"Notes"	"Fixed an issue where an incorrect map ID would be displayed in chat."
+		"Notes"	"Code optimizations."
 	}
 
 	"Files"

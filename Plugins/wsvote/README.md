@@ -2,7 +2,13 @@
 
 ## Changelog
 
-v1.2.0-1 (2022-12-04) [(Latest)]()
+v1.2.1 (2024-04-19) [(Latest)]()
+
+- Fixed an issue where parsing a URL parsing would error.
+- Fixed an issue where an incorrect map ID would be displayed in chat.
+- Code optimizations.
+
+v1.2.0-1 (2022-12-04) [(Commit)](https://github.com/llamasking/sourcemod-plugins/commit/8d1e68fd6b06990ffe94a55991bc9e5000bdec06)
 
 - Recompile to be sure it's not mistakenly in debug mode.
 - Translation fix.

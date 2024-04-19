@@ -19,15 +19,15 @@
 
 #pragma semicolon 1
 
+#include <SteamWorks>
 #include <multicolors>
 #include <nativevotes>
 #include <sourcemod>
-#include <SteamWorks>
 
 #pragma newdecls required
 
 //#define DEBUG
-#define VERSION    "1.2.0-1"
+#define VERSION    "1.2.1"
 #define UPDATE_URL "https://raw.githubusercontent.com/llamasking/sourcemod-plugins/master/Plugins/wsvote/updatefile.txt"
 
 #if !defined DEBUG
@@ -37,13 +37,11 @@
 
 public Plugin myinfo =
 {
-    name        = "Workshop Map Vote",
-    author      = "llamasking",
-    description = "Allows players to call votes to change to workshop maps.",
-    version     = VERSION,
-    url         = "https://github.com/llamasking/sourcemod-plugins"
-
-
+        name        = "Workshop Map Vote",
+        author      = "llamasking",
+        description = "Allows players to call votes to change to workshop maps.",
+        version     = VERSION,
+        url         = "https://github.com/llamasking/sourcemod-plugins"
 }
 
 /* This is a datapack that contains information on the active vote and is only ever set while a vote is active. */
@@ -59,8 +57,8 @@ ConVar g_notify;
 ConVar g_notifydelay;
 
 /* Current Map Info */
-char g_cmap_name[64];
-char g_cmap_id[64];
+char g_cmap_name[64] = "Unknown";
+char g_cmap_id[64]   = "Unknown";
 bool g_cmap_stock;
 
 public void OnPluginStart()
@@ -88,7 +86,7 @@ public void OnPluginStart()
 
     // Compile regex
     char error[256];
-    r_get_map_id = new Regex("^https?://(www\\.)?steamcommunity\\.com/sharedfiles/filedetails/.*[?&]id=(\\d+)", PCRE_CASELESS, error, sizeof(error));
+    r_get_map_id = new Regex("https?://(?:www\\.)?steamcommunity\\.com/sharedfiles/filedetails/.*[?&]id=(\\d+)", PCRE_CASELESS, error, sizeof(error));
     if (strlen(error) != 0)
     {
         LogError(error);
@@ -134,30 +132,25 @@ public void OnLibraryAdded(const char[] name)
 // Current Map Functionality
 public void OnMapStart()
 {
-#if defined DEBUG
-    LogMessage("---- Update Map");
-#endif
-
     char cmap_name[64];
     GetCurrentMap(cmap_name, sizeof(cmap_name));
 
-    if (StrContains(cmap_name, ".ugc") != -1)
+    // Workshop maps will end in .ugc[id]
+    // Ex: workshop/ctf_applejack_rc1.ugc3219571335
+    // By checking for that, we can tell if the current map is from the workshop or not.
+
+    int ugc_idx  = StrContains(cmap_name, ".ugc");
+    g_cmap_stock = ugc_idx == -1;
+
+    if (!g_cmap_stock)
     {
-#if defined DEBUG
-        LogMessage("---- Workshop Map");
-#endif
-
-        g_cmap_stock = false;
-
         // Get map ID out of it's name
-        char buffers[2][64];
-        ExplodeString(cmap_name, ".ugc", buffers, 2, 64);
-        strcopy(g_cmap_id, sizeof(g_cmap_id), buffers[1]);
+        strcopy(g_cmap_id, sizeof(g_cmap_id), cmap_name[ugc_idx + 4]);
 
         // Query SteamAPI for more information.
         // Format body of request.
         char reqBody[64];
-        Format(reqBody, sizeof(reqBody), "itemcount=1&publishedfileids[0]=%s&format=vdf", buffers[1]);
+        Format(reqBody, sizeof(reqBody), "itemcount=1&publishedfileids[0]=%s&format=vdf", g_cmap_id);
 
         // Query SteamAPI.
         Handle req = SteamWorks_CreateHTTPRequest(k_EHTTPMethodPOST, "https://api.steampowered.com/ISteamRemoteStorage/GetPublishedFileDetails/v1/");
@@ -167,27 +160,16 @@ public void OnMapStart()
     }
     else
     {
-#if defined DEBUG
-        LogMessage("---- Stock Map");
-#endif
-
-        g_cmap_stock = true;
         strcopy(g_cmap_name, sizeof(g_cmap_name), cmap_name);
     }
 }
 
 public void UpdateCurrentMapCallback(Handle req, bool failure, bool requestSuccessful, EHTTPStatusCode statusCode)
 {
-#if defined DEBUG
-    LogMessage("---- Map Callback");
-#endif
-
     if (failure || !requestSuccessful || statusCode != k_EHTTPStatusCode200OK)
     {
-        strcopy(g_cmap_name, sizeof(g_cmap_name), "Error");
-
         LogError("Error updating current map info!");
-        delete req;    // See notice below.
+        delete req;  // See notice below.
         return;
     }
 
@@ -215,22 +197,18 @@ public void UpdateCurrentMapCallback(Handle req, bool failure, bool requestSucce
     delete kv;
 }
 
-// Notify Functionality
+// Provides players with the name and ID of the map they're on when they join.
 public void OnClientPutInServer(int client)
 {
-    if (GetConVarBool(g_notify) && IsClientValid(client))
+    if (!g_cmap_stock && GetConVarBool(g_notify) && IsClientValid(client))
         CreateTimer(GetConVarFloat(g_notifydelay), Timer_NotifyPlayer, GetClientUserId(client));
 }
 
 public Action Timer_NotifyPlayer(Handle timer, any userid)
 {
-#if defined DEBUG
-    LogMessage("---- Notify Timer");
-#endif
     int client = GetClientOfUserId(userid);
 
-    // Ignore if the player left and all that good shit
-    if (!g_cmap_stock && IsClientValid(client))
+    if (IsClientValid(client))
         CPrintToChat(client, "{gold}[Workshop]{default} %t", "WsVote_CurrentMap_Workshop", g_cmap_name, g_cmap_id);
 
     return Plugin_Handled;
@@ -240,13 +218,10 @@ public Action Timer_NotifyPlayer(Handle timer, any userid)
 public Action Command_CurrentMap(int client, int args)
 {
     if (g_cmap_stock)
-    {
         CPrintToChat(client, "{gold}[Workshop]{default} %t", "WsVote_CurrentMap_Stock", g_cmap_name);
-    }
     else
-    {
         CPrintToChat(client, "{gold}[Workshop]{default} %t", "WsVote_CurrentMap_Workshop", g_cmap_name, g_cmap_id);
-    }
+
     return Plugin_Handled;
 }
 
@@ -264,19 +239,27 @@ public Action Command_WsVote(int client, int args)
         return Plugin_Handled;
     }
 
-    // Get workshop map id and ignore if none is given.
-    char map_id[128];
-    GetCmdArg(1, map_id, sizeof(map_id));                            // Gets first arg of command
-    if (StrContains(map_id, "http") == 0 && r_get_map_id != null)    // Find the id if the arg appears to be a url
+    // Get workshop map id
+    char map_id[16];
+    GetCmdArg(1, map_id, sizeof(map_id));
+
+    // If the user provided a link instead of the id directly, attempt to dig it out using regex.
+    if (StrContains(map_id, "http") == 0 && r_get_map_id != null)
     {
-#if defined DEBUG
-        CPrintToChatAll("%i", r_get_map_id);
-        CPrintToChatAll("%i", r_get_map_id.Match(map_id));
-#endif
-        r_get_map_id.GetSubString(1, map_id, sizeof(map_id));
+        // Note: For a command such as 'sm_wsmap https://steamcommunity.com/sharedfiles/filedetails/?id=3219571335',
+        // Arg 1 is just 'https'. It used to be the entire url, but it changed at some point.
+
+        char cmd_buff[128];
+        GetCmdArgString(cmd_buff, sizeof(cmd_buff));                                          // Read entire command into buffer
+        if (r_get_map_id.Match(cmd_buff) <= 0)                                                // Run regex on buffer.
+        {                                                                                     // If regex fails to find id, error
+            CReplyToCommand(client, "{gold}[Workshop]{default} %t", "WsVote_CallVote_NoId");  //
+            return Plugin_Handled;                                                            //
+        }                                                                                     //
+        r_get_map_id.GetSubString(1, map_id, sizeof(map_id));                                 // Regex found id
     }
 
-    // Map ID must be a string because StringToInt(map_id) will overflow,
+    // Map ID must be stored as a string because StringToInt(map_id) will int overflow,
     // but this works to test if the map_id string is a number.
     if (StringToInt(map_id) == 0)
     {
@@ -288,10 +271,10 @@ public Action Command_WsVote(int client, int args)
     char reqBody[64];
     Format(reqBody, sizeof(reqBody), "itemcount=1&publishedfileids[0]=%s&format=vdf", map_id);
 
-    // Bundle datapack which contains a bunch of data about this request
+    // Bundle datapack with information about this request
     DataPack pack = CreateDataPack();
-    pack.WriteCell(GetClientUserId(client));    // Cell 1: User ID of player initiating vote
-    pack.WriteString(map_id);                   // Cell 2: Map ID as a string
+    pack.WriteCell(GetClientUserId(client));  // Cell 1: User ID of player initiating vote
+    pack.WriteString(map_id);                 // Cell 2: Map ID as a string
 
     // Query SteamAPI.
     Handle req = SteamWorks_CreateHTTPRequest(k_EHTTPMethodPOST, "https://api.steampowered.com/ISteamRemoteStorage/GetPublishedFileDetails/v1/");
@@ -305,16 +288,12 @@ public Action Command_WsVote(int client, int args)
 
 public void ReqCallback(Handle req, bool failure, bool requestSuccessful, EHTTPStatusCode statusCode, DataPack pack)
 {
-#if defined DEBUG
-    LogMessage("---- Request Callback");
-#endif
-
     // Unpack datapack
     pack.Reset();
     char map_id[16];
-    int  user_id = pack.ReadCell();             // Cell 1: User ID of player initiating vote
-    pack.ReadString(map_id, sizeof(map_id));    // Cell 2: Map ID as a string
-                                                // Cell 3: Map name (unknown right now)
+    int user_id = pack.ReadCell();            // Cell 1: User ID of player initiating vote
+    pack.ReadString(map_id, sizeof(map_id));  // Cell 2: Map ID as a string
+                                              // Cell 3: Map name (unknown right now, but will be added later)
 
     int client = GetClientOfUserId(user_id);
 
@@ -322,7 +301,7 @@ public void ReqCallback(Handle req, bool failure, bool requestSuccessful, EHTTPS
     if (!IsClientValid(client))
     {
         delete req;
-        CloseHandle(pack);
+        delete pack;
         return;
     }
 
@@ -330,8 +309,8 @@ public void ReqCallback(Handle req, bool failure, bool requestSuccessful, EHTTPS
     {
         CPrintToChat(client, "{gold}[Workshop]{default} %t", "WsVote_CallVote_ApiFailure");
         LogError("Error on request for id: '%s'", map_id);
-        delete req;    // See notice below.
-        CloseHandle(pack);
+        delete req;
+        delete pack;
         return;
     }
 
@@ -340,6 +319,7 @@ public void ReqCallback(Handle req, bool failure, bool requestSuccessful, EHTTPS
     SteamWorks_GetHTTPResponseBodySize(req, size);
     char[] data = new char[size];
     SteamWorks_GetHTTPResponseBodyData(req, data, size);
+    delete req;  // We don't need this anymore.
 
     // Turn response into keyvalues.
     KeyValues kv = new KeyValues("response");
@@ -354,29 +334,30 @@ public void ReqCallback(Handle req, bool failure, bool requestSuccessful, EHTTPS
     // Also accidentally verifies that the id is actually a map since apparently only maps can have subscriptions.
     if (kv.GetNum("consumer_app_id") != 440 || (kv.GetNum("lifetime_subscriptions") < GetConVarInt(g_minsubs)))
     {
-#if defined DEBUG
-        CPrintToChat(client,
-                     "{fullred}[Workshop]{default} AppId: '%i', Subs: '%i'",
-                     kv.GetNum("consumer_app_id"),
-                     kv.GetNum("lifetime_subscriptions"));
-#endif
         CPrintToChat(client, "{gold}[Workshop]{default} %t", "WsVote_CallVote_InvalidItem");
 
-        // See notice below
-        delete req;
         delete kv;
-        CloseHandle(pack);
+        delete pack;
 
         return;
     }
 
-    // Get map name!
+    // Get map name and save to to DataPack.
     char map_name[64];
     kv.GetString("title", map_name, sizeof(map_name));
-    pack.WriteString(map_name);    // Cell 3: Map name
+    pack.WriteString(map_name);  // Cell 3: Map name
+    delete kv;                   // We don't need this anymore.
+
+    // Abort if a vote is already in progress.
+    if (NativeVotes_IsVoteInProgress())
+    {
+        CPrintToChat(client, "{gold}[Workshop]{default} %t", "WsVote_ExistingVote");
+        delete pack;
+        return;
+    }
 
     // Initialize vote.
-    NativeVote vote = new NativeVote(Nv_Vote, NativeVotesType_ChgLevel);
+    NativeVote vote = new NativeVote(Nv_Vote_Handler, NativeVotesType_ChgLevel);
     vote.SetDetails(map_name);
     vote.Initiator = client;
 
@@ -391,35 +372,20 @@ public void ReqCallback(Handle req, bool failure, bool requestSuccessful, EHTTPS
         players[total++] = i;
     }
 
-    // Display vote or error if a vote is in progress.
-    if (NativeVotes_IsVoteInProgress())
+    // Returns true if vote has been initiated and false otherwise
+    if (vote.DisplayVote(players, total, 20, VOTEFLAG_NO_REVOTES))
     {
-        CPrintToChat(client, "{gold}[Workshop]{default} %t", "WsVote_ExistingVote");
-        CloseHandle(pack);
-        vote.Close();
+        g_active_vote_info = pack;  // A bit of a hack to get around the fact that NativeVotes_Handler doesn't have a way to pass arbitrary data.
     }
     else
     {
-        // Returns true if vote has been initiated and false otherwise
-        if (vote.DisplayVote(players, total, 20, VOTEFLAG_NO_REVOTES))
-        {
-            g_active_vote_info = pack;
-        }
-        else
-        {
-            CPrintToChat(client, "{gold}[Workshop]{default} %t", "WsVote_ExistingVote");
-            CloseHandle(pack);
-            vote.Close();
-        }
+        CPrintToChat(client, "{gold}[Workshop]{default} %t", "WsVote_ExistingVote");
+        delete pack;
+        vote.Close();
     }
-
-    // NOTICE: FOR THE LOVE OF ALL THINGS YOU CARE ABOUT, DELETE HANDLES.
-    // OTHERWISE IT WILL LEAK SO BADLY THAT THE SERVER WILL ALMOST IMMEDIATELY CRASH.
-    delete req;
-    delete kv;
 }
 
-public int Nv_Vote(NativeVote vote, MenuAction action, int param1, int param2)
+public int Nv_Vote_Handler(NativeVote vote, MenuAction action, int param1, int param2)
 {
     // Taken from one of the comments on the NativeVotes thread on AM.
     switch (action)
@@ -429,15 +395,14 @@ public int Nv_Vote(NativeVote vote, MenuAction action, int param1, int param2)
             if (param1 == NATIVEVOTES_VOTE_YES)
             {
                 // Unpack datapack
-                DataPack pack = g_active_vote_info;
-                pack.Reset();
                 char map_id[16];
                 char map_name[64];
-                int  user_id = pack.ReadCell();                 // Cell 1: User ID of player initiating vote
-                pack.ReadString(map_id, sizeof(map_id));        // Cell 2: Map ID as a string
-                pack.ReadString(map_name, sizeof(map_name));    // Cell 3: Map name (unknown right now)
+                g_active_vote_info.Reset();
+                int user_id = g_active_vote_info.ReadCell();                // Cell 1: User ID of player initiating vote
+                g_active_vote_info.ReadString(map_id, sizeof(map_id));      // Cell 2: Map ID as a string
+                g_active_vote_info.ReadString(map_name, sizeof(map_name));  // Cell 3: Map name
 
-                // Attempt to download map ahead of time.
+                // Attempt to preload map ahead of time.
                 ServerCommand("tf_workshop_map_sync \"%s\"", map_id);
 
                 vote.DisplayPass(map_name);
@@ -455,34 +420,32 @@ public int Nv_Vote(NativeVote vote, MenuAction action, int param1, int param2)
 
                 CPrintToChatAll("{gold}[Workshop]{default} %t", "WsVote_CallVote_VotePass", map_name, RoundToNearest(delay));
 
-                CreateTimer(delay, Timer_ChangeLevel, pack);
+                // Create a new DataPack containing just the map id to pass through the timer.
+                // This allows g_active_vote_info to always be cleared when vote ends and not be worried about any further.
+                // Otherwise, clearing is complicated. It's not untennable by any means, but this is less easy to screw up.
+                // See: How to use CreateDataTimer: https://discord.com/channels/335290997317697536/335290997317697536/1154405516546686996
+                DataPack newpack;
+                CreateDataTimer(delay, Timer_ChangeLevel, newpack);
+                newpack.WriteString(map_id);
             }
             else
             {
                 vote.DisplayFail(NativeVotesFail_Loses);
-                CloseHandle(g_active_vote_info);    // Vote fail: Close pack
             }
         }
 
         case MenuAction_VoteCancel:
         {
             if (param1 == VoteCancel_NoVotes)
-            {
                 vote.DisplayFail(NativeVotesFail_NotEnoughVotes);
-            }
             else
-            {
                 vote.DisplayFail(NativeVotesFail_Generic);
-            }
-
-            CloseHandle(g_active_vote_info);    // Vote fail: Close pack
         }
 
         case MenuAction_End:
         {
             vote.Close();
-            g_active_vote_info = null;    // Don't CloseHandle since its already closed if the vote failed and is needed if the vote passed.
-                                          // Just null out the global reference. (The timer has its own reference.)
+            delete g_active_vote_info;
         }
     }
 
@@ -491,28 +454,19 @@ public int Nv_Vote(NativeVote vote, MenuAction action, int param1, int param2)
 
 public Action Timer_ChangeLevel(Handle timer, DataPack pack)
 {
-#if defined DEBUG
-    LogMessage("---- Timer_ChangeLevel");
-#endif
-
     char map_id[16];
     pack.Reset();
-    pack.ReadCell();                            // Cell 1: User ID of player initiating vote
-    pack.ReadString(map_id, sizeof(map_id));    // Cell 2: Map ID as a string
-    CloseHandle(pack);                          // Close pack once it is no longer needed.
+    pack.ReadString(map_id, sizeof(map_id));
 
-#if !defined DEBUG
     ServerCommand("changelevel \"workshop/%s\"", map_id);
-#endif
 
     return Plugin_Handled;
 }
 
 bool IsClientValid(int client)
 {
-    return (
-        (0 < client <= MaxClients)
-        && IsClientInGame(client)
-        && !IsFakeClient(client)
-        && !IsClientInKickQueue(client));
+    return (0 < client <= MaxClients) &&
+           IsClientInGame(client) &&
+           !IsFakeClient(client) &&
+           !IsClientInKickQueue(client);
 }
