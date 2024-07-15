@@ -23,14 +23,16 @@
 #include <multicolors>
 #include <sourcemod>
 
-#define VERSION "1.0.0"
+#define VERSION "1.1.0"
 
 /* ConVars */
 ConVar g_cMessage;
+ConVar g_cMessage2;
 ConVar g_cIP;
 
 /* Variables: Cached Data */
-char g_sMessage[256];
+char g_sMessage[240];
+char g_sMessage2[240];
 char g_sIP[22];
 bool g_bIsActive = false;
 
@@ -45,10 +47,12 @@ public Plugin myinfo =
 
 public void OnPluginStart()
 {
-    g_cMessage = CreateConVar("sm_phaseout_message", "", "The message to be sent to players notifying them the server is being phased out.", FCVAR_PROTECTED);
-    g_cIP      = CreateConVar("sm_phaseout_new_ip", "", "IP and port to reconnect players to.", FCVAR_PROTECTED);
+    g_cMessage  = CreateConVar("sm_phaseout_message", "", "The message to be sent to players notifying them the server is being phased out.", FCVAR_PROTECTED);
+    g_cMessage2 = CreateConVar("sm_phaseout_message2", "", "A second message to be sent.", FCVAR_PROTECTED);
+    g_cIP       = CreateConVar("sm_phaseout_new_ip", "", "IP and port to reconnect players to.", FCVAR_PROTECTED);
 
     g_cMessage.AddChangeHook(Callback_ConvarChanged);
+    g_cMessage2.AddChangeHook(Callback_ConvarChanged);
     g_cIP.AddChangeHook(Callback_ConvarChanged);
 
     RegConsoleCmd("sm_hop", Command_Hop, "Reconnect player to new server IP.");
@@ -61,6 +65,8 @@ public void Callback_ConvarChanged(ConVar convar, const char[] oldValue, const c
 
     if (convar == g_cMessage)
         strcopy(g_sMessage, sizeof(g_sMessage), newValue);
+    else if (convar == g_cMessage2)
+        strcopy(g_sMessage2, sizeof(g_sMessage2), newValue);
     else
         strcopy(g_sIP, sizeof(g_sIP), newValue);
 }
@@ -68,14 +74,19 @@ public void Callback_ConvarChanged(ConVar convar, const char[] oldValue, const c
 public void OnClientPutInServer(int client)
 {
     if (g_bIsActive)
-        CreateTimer(10.0, Timer_NotifyPlayer, GetClientUserId(client));
+        CreateTimer(30.0, Timer_NotifyPlayer, GetClientUserId(client));
 }
 
 public Action Timer_NotifyPlayer(Handle timer, any userId)
 {
     int client = GetClientOfUserId(userId);
     if (IsClientValid(client))
+    {
         CPrintToChat(client, g_sMessage);
+
+        if (strlen(g_sMessage2) != 0)
+            CPrintToChat(client, g_sMessage2);
+    }
 
     return Plugin_Handled;
 }
