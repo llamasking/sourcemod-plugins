@@ -1,7 +1,7 @@
 /**
  * ======================================================================
  * Auto Hostname
- * Copyright (C) 2020-2021 llamasking
+ * Copyright (C) 2020-2024 llamasking
  * ======================================================================
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,25 +18,24 @@
  */
 
 #pragma semicolon 1
+#pragma newdecls required
+
 #include <sourcemod>
 
-#define VERSION "1.1.4"
+#define VERSION "1.2.0"
 
 public Plugin myinfo =
 {
-    name        = "Auto Hostname",
-    author      = "llamasking",
-    description = "Automatically generates the server's hostname after each map change.",
-    version     = VERSION,
-    url         = "https://github.com/llamasking/sourcemod-plugins",
-
-
+        name        = "Auto Hostname",
+        author      = "llamasking",
+        description = "Automatically generates the server's hostname after each map change.",
+        version     = VERSION,
+        url         = "https://github.com/llamasking/sourcemod-plugins"
 }
 
 ConVar g_enabled;
 ConVar g_prefix;
 ConVar g_suffix;
-Handle g_activeTimer = INVALID_HANDLE;
 
 public void OnPluginStart()
 {
@@ -56,46 +55,33 @@ public void OnPluginStart()
 
 public void OnConVarChange(ConVar convar, const char[] oldValue, const char[] newValue)
 {
-    // Abort a pending update if one exists
-    if (g_activeTimer != INVALID_HANDLE)
-        CloseHandle(g_activeTimer);
-
-    // Wait a little bit before updating the hostname. That way other configs can make their changes to the convars.
-    g_activeTimer = CreateTimer(0.5, UpdateHostname);
+    UpdateHostname();
 }
 
 public void OnConfigsExecuted()
 {
-    // Abort a pending update if one exists
-    if (g_activeTimer != INVALID_HANDLE)
-        CloseHandle(g_activeTimer);
-
-    // Because copy paste.
-    g_activeTimer = CreateTimer(0.5, UpdateHostname);
+    UpdateHostname();
 }
 
-public Action UpdateHostname(Handle timer)
+public void UpdateHostname()
 {
-    // Reset timer
-    g_activeTimer = INVALID_HANDLE;
-
     // Check if plugin is enabled
     if (GetConVarBool(g_enabled))
     {
         char s_map[256];
-        GetCurrentMap(s_map, sizeof(s_map));               // Get map name. (itemtest, ctf_2fort)
-        GetMapDisplayName(s_map, s_map, sizeof(s_map));    // Strip prefix and suffix that exists on workshop maps. (itemtest, ctf_2fort)
+        GetCurrentMap(s_map, sizeof(s_map));             // Get map name.
+        GetMapDisplayName(s_map, s_map, sizeof(s_map));  // Strip 'workshop/' prefix and '.ugc000000' suffix that exist on workshop maps.
 
         // Split name across underscores
-        // Also skips over the first underscore ('ctf_2fort' effectively gets skipped to become '2fort' but maps without an underscore are unaffected)
-        int  index = StrContains(s_map, "_") + 1;
-        char exploded[8][32];    // 8 strings of 32 length
+        // Also skips over the first underscore. (The 'ctf' from 'ctf_2fort' gets skipped over when exploding. Maps without an underscore are unaffected.)
+        int index = StrContains(s_map, "_") + 1;
+        char exploded[8][32];  // 8 strings of 32 length
         ExplodeString(s_map[index], "_", exploded, sizeof(exploded), 32);
 
         // Note that the above line (ExplodeString) is visually incredibly unusual.
         // It took me two years to notice this, but where you might otherwise expect 's_map[index]' to read the char
-        // value off of the 's_map' array and pass it as a literal, its instead passing a reference to the
-        // 's_map' array offset by 'index' items. Its vaguely similar to if you did 's_map[index:]' in Python.
+        // value off of the 's_map' array and pass it as a literal, it's instead passing a reference to the
+        // 's_map' array offset by 'index' items. It's vaguely similar to if you did 's_map[index:]' in Python.
 
         // Capitalize things!
         for (int i = 0; i < sizeof(exploded); i++)
@@ -105,8 +91,8 @@ public Action UpdateHostname(Handle timer)
         ImplodeStrings(exploded, sizeof(exploded), " ", s_map, sizeof(s_map));
 
         // Remove "final" and "rc" from suffix if it's there.
-        SplitString(s_map, " Final", s_map, sizeof(s_map));
-        SplitString(s_map, " Rc", s_map, sizeof(s_map));
+        SplitString(s_map, "Final", s_map, sizeof(s_map));
+        SplitString(s_map, "Rc", s_map, sizeof(s_map));
 
         // Trim whitespace
         TrimString(s_map);
@@ -123,12 +109,11 @@ public Action UpdateHostname(Handle timer)
 
         // Sanitize potentially dangerous hostnames
         // It may not even be possible to have a map name such as `cp_dangerous"; arbitrary_command...`
-        // But lets err on the side of caution.
+        // but let's err on the side of caution.
         ReplaceString(hostname, sizeof(hostname), ";", "");
+        ReplaceString(hostname, sizeof(hostname), "\"", "");
 
         // Finally, update the hostname.
         ServerCommand("hostname \"%s\"", hostname);
     }
-
-    return Plugin_Stop;
 }
