@@ -44,17 +44,15 @@ When a player EITHER joins OR leaves, the 'player_count' table is updated with t
 #include <updater>
 
 //#define DEBUG
-#define VERSION    "1.0.2"
+#define VERSION    "1.1.0"
 #define UPDATE_URL "https://raw.githubusercontent.com/llamasking/sourcemod-plugins/master/Plugins/private_analytics/updatefile.txt"
 public Plugin myinfo =
 {
-    name        = "Private Analytics",
-    author      = "llamasking",
-    description = "An alternative to Dr. McKay's Player Analytics that logs much less identifiable information.",
-    version     = VERSION,
-    url         = "https://github.com/llamasking/sourcemod-plugins"
-
-
+        name        = "Private Analytics",
+        author      = "llamasking",
+        description = "An alternative to Dr. McKay's Player Analytics that logs much less identifiable information.",
+        version     = VERSION,
+        url         = "https://github.com/llamasking/sourcemod-plugins"
 }
 
 /* ConVars */
@@ -84,7 +82,6 @@ public void OnPluginStart()
 
     // Get map
     GetCurrentMap(g_map, sizeof(g_map));
-    GetMapDisplayName(g_map, g_map, sizeof(g_map));
 
     // Create tables if it doesn't already exist.
     Database.Connect(ConnectCallback, "priv_analytics");
@@ -96,6 +93,12 @@ public void OnPluginStart()
         Updater_AddPlugin(UPDATE_URL);
     }
 #endif
+}
+
+public void OnMapStart()
+{
+    // Get map
+    GetCurrentMap(g_map, sizeof(g_map));
 }
 
 /* Updater */
@@ -157,8 +160,7 @@ void InsertConnection(int client, const char[] htmlStatus, bool nullHtml = false
 
     // Query
     char query[512];
-    g_db.Format(query, sizeof(query), "INSERT INTO `player_analytics` SET server_ip = '%s', connect_time = '%i', numplayers = '%i', map = '%s', country = '%s', country_code = '%s', country_code3 = '%s', html_motd_disabled = %s;",
-                g_ip, GetTime(), GetPlayerCount(), g_map, country, country_code, country_code3, html);
+    g_db.Format(query, sizeof(query), "INSERT INTO `player_analytics` SET server_ip = '%s', connect_time = '%i', numplayers = '%i', map = '%s', country = '%s', country_code = '%s', country_code3 = '%s', html_motd_disabled = %s;", g_ip, GetTime(), GetPlayerCount(), g_map, country, country_code, country_code3, html);
 
 #if defined DEBUG
     LogMessage("%s", query);
@@ -174,8 +176,7 @@ public void UpdatePlayerCount()
 {
     // Query
     char query[512];
-    g_db.Format(query, sizeof(query), "INSERT INTO `player_count` SET server_ip = '%s', time = '%i', numplayers = '%i', map = '%s';",
-                g_ip, GetTime(), GetPlayerCount(), g_map);
+    g_db.Format(query, sizeof(query), "INSERT INTO `player_count` SET server_ip = '%s', time = '%i', numplayers = '%i', map = '%s';", g_ip, GetTime(), GetPlayerCount(), g_map);
 #if defined DEBUG
     LogMessage("%s", query);
 #else
