@@ -8,6 +8,12 @@ Further note: Usernames, SteamIDs, and IPs are **never** sent to the database. T
 
 ## Changelog
 
+## v1.1.0 (2024-09-27) [(Commit)](https://github.com/llamasking/sourcemod-plugins/commit/f5b694bb1ca17e2f3a6a248aaa64fc302d1380de)
+
+- Fixes bug where map name is not updated on change
+- Uses map full name instead of display name.
+  - This does nothing for builtin maps, but workshops maps will now report as workshop/ctf_2fort_mesa_a3a.ugc3330363468 instead of ctf_2fort_mesa_a3a
+
 v1.0.2 (2022-12-29) [(Commit)](https://github.com/llamasking/sourcemod-plugins/commit/f003000432c1a48474a0ecbd1865c006b10dbc6d)
 
 - Fix a 'Client X is not connected' exception.
