@@ -254,6 +254,7 @@ public Action Command_WsVote(int client, int args)
         if (r_get_map_id.Match(cmd_buff) <= 0)                                                // Run regex on buffer.
         {                                                                                     // If regex fails to find id, error
             CReplyToCommand(client, "{gold}[Workshop]{default} %t", "WsVote_CallVote_NoId");  //
+            LogError("Regex match failed for command '%s'", cmd_buff);                        //
             return Plugin_Handled;                                                            //
         }                                                                                     //
         r_get_map_id.GetSubString(1, map_id, sizeof(map_id));                                 // Regex found id
