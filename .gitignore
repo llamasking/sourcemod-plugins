@@ -5,6 +5,9 @@ spcomp*
 # VSCode Settings
 .vscode/settings.json
 
+# Python Virtual Env
+venv
+
 # Custom
 Plugins/_template/
 Plugins/test/
