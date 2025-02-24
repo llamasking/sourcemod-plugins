@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        SM_VERSION: ["1.11"]
+        SM_VERSION: ["1.12.x", "1.13.x"]
 
     steps:
       - uses: actions/checkout@v2
@@ -32,7 +32,7 @@ jobs:
         working-directory: ${{ env.SCRIPTS_PATH }}
 
       - name: Upload Compiled Plugins
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: plugins
-          path: ./*.smx
+          name: plugins-${{ matrix.SM_VERSION }}
+          path: ./**/*.smx
