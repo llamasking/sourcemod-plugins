@@ -22,7 +22,7 @@
 
 #include <sourcemod>
 
-#define VERSION "1.2.0"
+#define VERSION "1.2.1"
 
 public Plugin myinfo =
 {
@@ -68,14 +68,14 @@ public void UpdateHostname()
     // Check if plugin is enabled
     if (GetConVarBool(g_enabled))
     {
-        char s_map[256];
+        char s_map[128];
         GetCurrentMap(s_map, sizeof(s_map));             // Get map name.
         GetMapDisplayName(s_map, s_map, sizeof(s_map));  // Strip 'workshop/' prefix and '.ugc000000' suffix that exist on workshop maps.
 
         // Split name across underscores
         // Also skips over the first underscore. (The 'ctf' from 'ctf_2fort' gets skipped over when exploding. Maps without an underscore are unaffected.)
         int index = StrContains(s_map, "_") + 1;
-        char exploded[8][32];  // 8 strings of 32 length
+        char exploded[8][32];  // 8 strings of 32 length each
         ExplodeString(s_map[index], "_", exploded, sizeof(exploded), 32);
 
         // Note that the above line (ExplodeString) is visually incredibly unusual.
@@ -87,12 +87,13 @@ public void UpdateHostname()
         for (int i = 0; i < sizeof(exploded); i++)
             exploded[i][0] = CharToUpper(exploded[i][0]);
 
-        // Recombine the map name
-        ImplodeStrings(exploded, sizeof(exploded), " ", s_map, sizeof(s_map));
+        // Remove "final" and "rc" suffixes if they're used.
+        int recombineLen = sizeof(exploded);
+        if (StrEqual(exploded[recombineLen - 1], "Final") || StrEqual(exploded[recombineLen - 1], "Rc"))
+            recombineLen--;
 
-        // Remove "final" and "rc" from suffix if it's there.
-        SplitString(s_map, "Final", s_map, sizeof(s_map));
-        SplitString(s_map, "Rc", s_map, sizeof(s_map));
+        // Recombine the map name
+        ImplodeStrings(exploded, recombineLen, " ", s_map, sizeof(s_map));
 
         // Trim whitespace
         TrimString(s_map);
@@ -108,10 +109,11 @@ public void UpdateHostname()
         Format(hostname, sizeof(hostname), "%s %s %s", pfx, s_map, sfx);
 
         // Sanitize potentially dangerous hostnames
-        // It may not even be possible to have a map name such as `cp_dangerous"; arbitrary_command...`
+        // It is probably not even be possible to have a map name such as `cp_dangerous"; arbitrary_command...`
         // but let's err on the side of caution.
         ReplaceString(hostname, sizeof(hostname), ";", "");
         ReplaceString(hostname, sizeof(hostname), "\"", "");
+        ReplaceString(hostname, sizeof(hostname), "\\", "");
 
         // Finally, update the hostname.
         ServerCommand("hostname \"%s\"", hostname);
