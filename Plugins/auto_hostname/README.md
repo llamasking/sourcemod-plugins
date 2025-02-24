@@ -2,6 +2,10 @@
 
 ## Changelog
 
+v1.2.2 (2025-02-23) [(Latest)]()
+
+- Improve final/rc suffix detection.
+
 v1.2.1 (2025-02-23) [(Commit)](https://github.com/llamasking/sourcemod-plugins/commit/e9ced24b200f73e93d222289a1b0a859a9874b1b)
 
 - Add extra sanity check.

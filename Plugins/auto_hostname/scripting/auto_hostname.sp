@@ -22,7 +22,7 @@
 
 #include <sourcemod>
 
-#define VERSION "1.2.1"
+#define VERSION "1.2.2"
 
 public Plugin myinfo =
 {
@@ -89,7 +89,7 @@ public void UpdateHostname()
 
         // Remove "final" and "rc" suffixes if they're used.
         int recombineLen = sizeof(exploded);
-        if (StrEqual(exploded[recombineLen - 1], "Final") || StrEqual(exploded[recombineLen - 1], "Rc"))
+        if (StrContains(exploded[recombineLen - 1], "Final") || StrContains(exploded[recombineLen - 1], "Rc"))
             recombineLen--;
 
         // Recombine the map name
