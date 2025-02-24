@@ -2,6 +2,11 @@
 
 ## Changelog
 
+v1.2.1 (2025-02-23) [(Commit)](https://github.com/llamasking/sourcemod-plugins/commit/e9ced24b200f73e93d222289a1b0a859a9874b1b)
+
+- Add extra sanity check.
+- Likely improve performance a marginal amount.
+
 v1.2.0 (2024-04-16) [(Commit)](https://github.com/llamasking/sourcemod-plugins/commit/b09eedef4d3276435b867ab7562b54c50563cdf9)
 
 - Update hostname immediately upon convar change. Previously, the plugin would pause a moment, expecting multiple convars to change, but this extra complexity is not necessary as it has little to no benefit.
