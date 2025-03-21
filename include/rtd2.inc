@@ -31,6 +31,7 @@ public void __pl_rtd2_SetNTVOptional(){
 	MarkNativeAsOptional("RTD2_GetClientPerkId"); // deprecated
 	MarkNativeAsOptional("RTD2_GetClientPerk");
 	MarkNativeAsOptional("RTD2_GetClientPerkTime");
+	MarkNativeAsOptional("RTD2_AddClientPerkTime");
 
 	MarkNativeAsOptional("RTD2_ForcePerk"); // deprecated
 	MarkNativeAsOptional("RTD2_Force");
@@ -72,6 +73,8 @@ public void __pl_rtd2_SetNTVOptional(){
 #define ROLLFLAG_OVERRIDE_LOADOUT		(1 << 2)	/* Ignore whether the client has irrelevant loadout */
 #define ROLLFLAG_IGNORE_PERK_REPEATS	(1 << 3)	/* Ignore whether the perk was rolled recently */
 #define ROLLFLAG_IGNORE_PLAYER_REPEATS	(1 << 4)	/* Ignore whether the client has rolled the perk recently */
+#define ROLLFLAG_IGNORE_GLOBAL_LIMIT	(1 << 5)	/* Ignore whether the perk is globally limited */
+#define ROLLFLAG_IGNORE_TEAM_LIMIT		(1 << 6)	/* Ignore whether the perk is team limited */
 
 #define RTD2_MAX_PERK_NAME_LENGTH	128
 
@@ -93,6 +96,10 @@ enum RTDPerkProp{
 	RTDPerk_WeaponClasses,
 	RTDPerk_Tags,
 	RTDPerk_InternalCall,
+	RTDPerk_InternalInit,
+	RTDPerk_NoMedieval,
+	RTDPerk_LimitGlobal,
+	RTDPerk_LimitTeam,
 	RTDPerk_Enabled,
 	RTDPerk_External
 }
@@ -268,7 +275,8 @@ native RTDPerk RTD2_SetPerkPref(RTDPerk perk, const char[] sKey, const char[] sV
  * Format specific perk properties into a buffer.
  * Available specifiers: $Id$, $Name, $Good$,
  * $Sound$, $Token$, $Time$, $Tags$, $Class$,
- * $WeaponClass$, $Settings$, $InternalCall$
+ * $WeaponClass$, $Settings$, $InternalCall$,
+ * $InternalInit$
  *
  * @note Format example: "Perk: $Id$ - $Name$"
  * @note Mind the capitalization.
@@ -548,10 +556,65 @@ methodmap RTDPerk{
 	public RTDPerk SetCall(RTDCall func){
 		return RTD2_SetPerkCall(this, func);}
 
+	// Sets whether the perk is disabled in Medieval mode.
+	//
+	// @note Prefer the property if not chaining methods.
+	//
+	// @param bVal		Value to determine whether the perk is disabled in Medieval mode
+	//
+	// @return			Same RTDPerk object
+	public RTDPerk SetNoMedieval(bool bVal){
+		return RTD2_SetPerkAny(this, RTDPerk_NoMedieval, bVal);}
+
+	// Retrieves or sets whether the perk is disabled in Medieval mode.
+	property bool NoMedieval{
+		public get(){
+			return view_as<bool>(RTD2_GetPerkAny(this, RTDPerk_NoMedieval));}
+		public set(bool bVal){
+			RTD2_SetPerkAny(this, RTDPerk_NoMedieval, bVal);}
+	}
+
+	// Sets the active use limit of the perk, globally.
+	//
+	// @note Prefer the property if not chaining methods.
+	//
+	// @param bVal		Value to set the limit to
+	//
+	// @return			Same RTDPerk object
+	public RTDPerk SetLimitGlobal(int iVal){
+		return RTD2_SetPerkAny(this, RTDPerk_LimitGlobal, iVal);}
+
+	// Retrieves or sets the active use limit of the perk, globally.
+	property int LimitGlobal{
+		public get(){
+			return view_as<int>(RTD2_GetPerkAny(this, RTDPerk_LimitGlobal));}
+		public set(int iVal){
+			RTD2_SetPerkAny(this, RTDPerk_LimitGlobal, iVal);}
+	}
+
+	// Sets the active use limit of the perk, per team.
+	//
+	// @note Prefer the property if not chaining methods.
+	//
+	// @param bVal		Value to set the limit to
+	//
+	// @return			Same RTDPerk object
+	public RTDPerk SetLimitTeam(int iVal){
+		return RTD2_SetPerkAny(this, RTDPerk_LimitTeam, iVal);}
+
+	// Retrieves or sets the active use limit of the perk, per team.
+	property int LimitTeam{
+		public get(){
+			return view_as<int>(RTD2_GetPerkAny(this, RTDPerk_LimitTeam));}
+		public set(int iVal){
+			RTD2_SetPerkAny(this, RTDPerk_LimitTeam, iVal);}
+	}
+
 	// Format specific perk properties into a buffer.
 	// Available specifiers: $Id$, $Name, $Good$,
 	// $Sound$, $Token$, $Time$, $Tags$, $Class$,
-	// $WeaponClass$, $Pref$
+	// $WeaponClass$, $Settings$, $NoMedieval$,
+	// $LimitGlobal$, $LimitTeam$.
 	//
 	// @note Format example: "Perk: $Id$ - $Name$"
 	// @note Mind the capitalization.
@@ -584,7 +647,7 @@ methodmap RTDPerkList < ArrayList{
 	//
 	// @return		RTDPerk object
 	public RTDPerk Get(int i){
-		return view_as<RTDPerk>(this.Get(i));
+		return view_as<RTDPerk>(view_as<ArrayList>(this).Get(i));
 	}
 
 	// Get random perk from the list.
@@ -678,7 +741,7 @@ forward void RTD2_Removed(int client, RTDPerk perk, RTDRemoveReason reason);
  *
  * @return				Perk index if client is using RTD, -1 otherwise.
  */
-#pragma deprecated Use RTD_GetClientPerk instead
+#pragma deprecated Use RTD2_GetClientPerk instead
 native int RTD2_GetClientPerkId(int client);
 
 
@@ -702,6 +765,17 @@ native RTDPerk RTD2_GetClientPerk(int client);
  * @return				Time in seconds if client is using RTD, -1 otherwise.
  */
 native int RTD2_GetClientPerkTime(int client);
+
+
+/**
+ * Adds time to client's current roll.
+ *
+ * @param client		Client Index.
+ * @param iAddedTime	Additional time in seconds, can be negative to subtract.
+ *
+ * @return				New remaining perk time, or non-positive if client was not in roll or perk is about to be removed because of this call.
+ */
+native int RTD2_AddClientPerkTime(int client, int iAddedTime);
 
 
 /**
@@ -785,10 +859,12 @@ native RTDPerk RTD2_RemovePerk(int client, RTDRemoveReason reason=RTDRemove_Wear
  * @param client		Client Index.
  * @param reason		Reason enum.
  * @param sReason		Provide custom reason IF reason=RTDRemove_Custom.
+ * @param bForce		Forced removals are treated as loggable actions, whereas non-forced are "natural" reasons. No distinction other than what is logged.
+ * @param iInitiator	Client who initiated the removal. Used only when bForce=true.
  *
  * @return				RTDPerk object
  */
-native RTDPerk RTD2_Remove(int client, RTDRemoveReason reason=RTDRemove_WearOff, const char[] sReason="");
+native RTDPerk RTD2_Remove(int client, RTDRemoveReason reason=RTDRemove_WearOff, const char[] sReason="", bool bForce=false, int iInitiator=0);
 
 
 /**
