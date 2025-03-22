@@ -1,7 +1,7 @@
 /*
  * ======================================================================
  * VAC Check
- * Copyright (C) 2023 llamasking
+ * Copyright (C) 2023-2025 llamasking
  * ======================================================================
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,24 +23,18 @@
 #include <SteamWorks>
 #include <sourcemod>
 
-//#define DEBUG
-#define VERSION    "0.0.5"
-#define UPDATE_URL "https://raw.githubusercontent.com/llamasking/sourcemod-plugins/master/Plugins/vac_check/updatefile.txt"
+#undef REQUIRE_PLUGIN
+#include <sourcebanspp>
+#include <updater>
 
-#if !defined DEBUG
-    #undef REQUIRE_PLUGIN
-    #include <updater>
-#endif
+// #define DEBUG
+#define VERSION    "1.0.0"
+#define UPDATE_URL "https://raw.githubusercontent.com/llamasking/sourcemod-plugins/master/Plugins/vac_check/updatefile.txt"
+#define BAN_REASON "[VAC Check] VAC banned accounts are not permitted on this server."
 
 #if defined DEBUG
     #warning COMPILING IN DEBUG MODE!
 #endif
-
-/* ConVars */
-ConVar g_apiKey;
-ConVar g_vacMaxAge;
-ConVar g_maxBanCount;
-ConVar g_banLength;
 
 public Plugin myinfo =
 {
@@ -51,8 +45,14 @@ public Plugin myinfo =
         url         = "https://github.com/llamasking/sourcemod-plugins"
 }
 
-public void
-OnPluginStart()
+/* ConVars */
+ConVar g_apiKey;
+ConVar g_vacMaxAge;
+ConVar g_maxBanCount;
+ConVar g_banLength;
+bool g_bSourceBansPP = false;
+
+public void OnPluginStart()
 {
     CreateConVar("sm_vac_version", VERSION, "VAC Check version.", FCVAR_NOTIFY | FCVAR_DONTRECORD);
     g_apiKey      = CreateConVar("sm_vac_api_key", "", "Your Steam Web API Key", FCVAR_PROTECTED);
@@ -62,6 +62,8 @@ OnPluginStart()
 
     AutoExecConfig();
 
+    g_bSourceBansPP = LibraryExists("sourcebans++");
+
 #if !defined DEBUG
     // Updater
     if (LibraryExists("updater"))
@@ -69,17 +71,23 @@ OnPluginStart()
 #endif
 }
 
-// Updater
-#if !defined DEBUG
-
 public void OnLibraryAdded(const char[] name)
 {
-    if (StrEqual(name, "updater"))
+    if (StrEqual(name, "sourcebans++"))
+        g_bSourceBansPP = true;
+#if !defined DEBUG
+    else if (StrEqual(name, "updater"))
         Updater_AddPlugin(UPDATE_URL);
-}
 #endif
+}
 
-public void OnClientAuthorized(int client, const char[] auth)
+public void OnLibraryRemoved(const char[] name)
+{
+    if (StrEqual(name, "sourcebans++"))
+        g_bSourceBansPP = false;
+}
+
+public void OnClientPostAdminCheck(int client)
 {
     char steamId[22];
     GetClientAuthId(client, AuthId_SteamID64, steamId, sizeof(steamId));
@@ -141,6 +149,7 @@ public void BanCheckCallback(Handle req, bool failure, bool requestSuccessful, E
     SteamWorks_GetHTTPResponseBodySize(req, respSize);
     char[] data = new char[respSize];
     SteamWorks_GetHTTPResponseBodyData(req, data, respSize);
+    delete req;  // Must be freed and is no longer necessary beyond this point.
 
     // Turn response into keyvalues.
     bool success = true;
@@ -153,7 +162,6 @@ public void BanCheckCallback(Handle req, bool failure, bool requestSuccessful, E
     if (!success)
     {
         LogError("Failed to parse KeyValues for '%L'", client);
-        delete req;
         delete kv;
         return;
     }
@@ -165,22 +173,19 @@ public void BanCheckCallback(Handle req, bool failure, bool requestSuccessful, E
     int tBanCnt = vBanCnt + gBanCnt;
 
     // Figure out some things
-    bool hasVacBan   = vBanCnt != 0;
-    bool hasGameBan  = gBanCnt != 0;
-    bool hasAnyBan   = hasVacBan || hasGameBan;
-    bool tooManyBans = tBanCnt > g_maxBanCount.IntValue;            // Too many bans for forgiveness
-    bool bansAreNew  = hasAnyBan && banAge < g_vacMaxAge.IntValue;  // Bans too new
-    if (g_vacMaxAge.IntValue == 0)
-        bansAreNew = hasAnyBan;  // If forgiveness is disabled
+    bool tooManyBans = tBanCnt > g_maxBanCount.IntValue;          // Account has received too many bans in its lifetime
+    bool bansAreNew  = tBanCnt && banAge < g_vacMaxAge.IntValue;  // Account has received bans too recently to play
+    if (g_vacMaxAge.IntValue == 0)                                // If bans are always "too recent"
+        bansAreNew = true;
 
 #if defined DEBUG
-    LogMessage("%L: hasVacBan: %i, hasGameBan: %i, hasAnyBan: %i", client, hasVacBan, hasGameBan, hasAnyBan);
     LogMessage("%L: NumberOfVACBans: %i, NumberOfGameBans: %i, DaysSinceLastBan: %i", client, vBanCnt, gBanCnt, banAge);
-    LogMessage("%L: tooManyBans: %i, bansAreNew: %i", client, tooManyBans, bansAreNew);
+    LogMessage("%L: TotalBanCount: %i, TooManyBans: %i, BansAreNew: %i", client, tBanCnt, tooManyBans, bansAreNew);
+    LogMessage("%L: UseSourceBans++: %i", client, g_bSourceBansPP);
 #endif
 
-    // If the user has a ban and is not forgivable, ban them.
-    if (hasAnyBan && (tooManyBans || bansAreNew))
+    // If the user has either been VAC'd too many times or too recently
+    if (tBanCnt && (tooManyBans || bansAreNew))
     {
         // Calculate ban length
         int banDuration = g_banLength.IntValue;           // Default to ban duration set in convar
@@ -194,13 +199,15 @@ public void BanCheckCallback(Handle req, bool failure, bool requestSuccessful, E
 #if defined DEBUG
         LogMessage("Would have banned '%L' for '%i' days.", client, banDuration / 1440);
 #else
-        char reason[] = "[VAC Check] VAC banned accounts are not permitted on this server.";
-        BanClient(client, banDuration, BANFLAG_AUTO, reason, reason);
+        if (g_bSourceBansPP)
+            SBPP_BanPlayer(0, client, banDuration, BAN_REASON);
+        else
+            BanClient(client, banDuration, BANFLAG_AUTO, BAN_REASON, BAN_REASON, "sm_ban", _);
+
         LogMessage("Banned '%L' for '%i' days.", client, banDuration / 1440);
 #endif
     }
 
     // Cleanup
-    delete req;
     delete kv;
 }

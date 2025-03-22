@@ -4,12 +4,11 @@
 	{
 		"Version"
 		{
-			"Latest"	"0.0.5"
+			"Latest"	"1.0.0"
 		}
 
-		"Notes"	"Properly implement Updater support."
-		"Notes"	"Drop support for SourceBans++."
-		"Notes"	"Fix potential memory leak."
+		"Notes"	"Re-add SourceBans++ support. (This time it actually works.)"
+		"Notes"	"Fix 'Client index -1 is invalid' error which broke the plugin."
 	}
 
 	"Files"
