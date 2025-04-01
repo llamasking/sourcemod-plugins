@@ -28,9 +28,9 @@
 #include <updater>
 
 // #define DEBUG
-#define VERSION    "1.0.0"
+#define VERSION    "1.0.1"
 #define UPDATE_URL "https://raw.githubusercontent.com/llamasking/sourcemod-plugins/master/Plugins/vac_check/updatefile.txt"
-#define BAN_REASON "[VAC Check] VAC banned accounts are not permitted on this server."
+#define BAN_REASON "[VAC Check] VAC/Game bans are either too many or too recent"
 
 #if defined DEBUG
     #warning COMPILING IN DEBUG MODE!

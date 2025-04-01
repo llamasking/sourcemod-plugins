@@ -4,11 +4,10 @@
 	{
 		"Version"
 		{
-			"Latest"	"1.0.0"
+			"Latest"	"1.0.1"
 		}
 
-		"Notes"	"Re-add SourceBans++ support. (This time it actually works.)"
-		"Notes"	"Fix 'Client index -1 is invalid' error which broke the plugin."
+		"Notes"	"Shorten and improve ban message."
 	}
 
 	"Files"
