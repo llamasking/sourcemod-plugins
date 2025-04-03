@@ -26,7 +26,7 @@
 #include <sourcemod>
 
 //#define DEBUG
-#define VERSION    "1.0.0"
+#define VERSION    "1.0.1"
 #define UPDATE_URL "https://raw.githubusercontent.com/llamasking/sourcemod-plugins/master/Plugins/native_customvotes/updatefile.txt"
 
 #if defined DEBUG
@@ -40,7 +40,7 @@ public Plugin myinfo =
 {
         name        = "Native Custom Votes",
         author      = "llamasking",
-        description = "An alternative implementation of customvotes to utilize the NativeVotes system.",
+        description = "An alternative implementation of Custom Votes that utilizes the NativeVotes system.",
         version     = VERSION,
         url         = "https://github.com/llamasking/sourcemod-plugins"
 }
@@ -67,6 +67,10 @@ public void OnPluginStart()
     g_reStringBooleanInterp = new Regex("{(.*?)\\|(.*?)}", _, err, sizeof(err));
     if (strlen(err) != 0)
         SetFailState(err);
+
+    // Check that NativeVotes works here
+    if (!NativeVotes_IsVoteTypeSupported(NativeVotesType_Custom_YesNo))
+        SetFailState("This game does not support custom yes/no votes!");
 
     // Init config
     ReloadConfig();
@@ -297,6 +301,13 @@ public int Menu_OptionsMenuHandler(Menu menu, MenuAction action, int param1, int
 
 public void InitiateVote(const char[] kv_id_list, char[] display_text, int title_size, int client)
 {
+    // Error if a vote is in progress
+    if (NativeVotes_IsVoteInProgress())
+    {
+        CPrintToChat(client, "%t", "NCVote_ExistingVote");
+        return;
+    }
+
     NativeVote vote = new NativeVote(Nv_Handler, NativeVotesType_Custom_YesNo);
     ReplaceString(display_text, title_size, "%", "%%");  // Escape percent signs in vote title
     StrCat(display_text, title_size, "?");               // Add question mark to end of vote title.
@@ -313,31 +324,22 @@ public void InitiateVote(const char[] kv_id_list, char[] display_text, int title
         players[total++] = i;
     }
 
-    // Display vote or error if a vote is in progress.
-    if (NativeVotes_IsVoteInProgress())
+    // Returns true if vote has been initiated and false otherwise
+    if (vote.DisplayVote(players, total, 20, VOTEFLAG_NO_REVOTES))
     {
-        CPrintToChat(client, "%t", "NCVote_ExistingVote");
-        vote.Close();
+        // It is not easy to discern the option being voted on in the callback
+        // with the data that function is provided, so the vote key is copied
+        // and used for JumpToKey.
+        //
+        // This isn't necessarily *required* as long as g_kvConfig does not jump to
+        // another section while the vote is running (it shouldn't), but this is
+        // to be extra safe.
+        strcopy(g_sActiveVoteKeyInfo, MaxVoteKeyLen, kv_id_list);
     }
     else
     {
-        // Returns true if vote has been initiated and false otherwise
-        if (vote.DisplayVote(players, total, 20, VOTEFLAG_NO_REVOTES))
-        {
-            // It is not easy to discern the option being voted on in the callback
-            // with the data that function is provided, so the vote key is copied
-            // and used for JumpToKey.
-            //
-            // This isn't necessarily *required* as long as g_kvConfig does not jump to
-            // another section while the vote is running (it shoudn't), but this is
-            // to be extra safe.
-            strcopy(g_sActiveVoteKeyInfo, MaxVoteKeyLen, kv_id_list);
-        }
-        else
-        {
-            CPrintToChat(client, "%t", "NCVote_ExistingVote");
-            vote.Close();
-        }
+        CPrintToChat(client, "%t", "NCVote_ExistingVote");
+        vote.Close();
     }
 }
 
@@ -445,12 +447,12 @@ bool IsClientValid(int client)
  * @param maxlen            Maximum length of the string.
  * @param is_true_result    For boolean (`{true|false}`) formatting items, this determines if the left or right value should be used.
  * @param option_name       Optional. Contents of `{OPTION_NAME}` if it exists within the string.
- * @param option_res        Optional. Contents of `{OPTION_RESULT}` if it exists within the string.
+ * @param option_value      Optional. Contents of `{OPTION_VALUE}` if it exists within the string.
  */
-void StringInterpolate(char[] text, int maxlen, bool is_true_result = true, char[] option_name = "", char[] option_res = "")
+void StringInterpolate(char[] text, int maxlen, bool is_true_result = true, char[] option_name = "", char[] option_value = "")
 {
     ReplaceString(text, maxlen, "{OPTION_NAME}", option_name);
-    ReplaceString(text, maxlen, "{OPTION_RESULT}", option_res);
+    ReplaceString(text, maxlen, "{OPTION_VALUE}", option_value);
 
     int match_count = g_reStringBooleanInterp.Match(text);
     if (match_count > 0)
