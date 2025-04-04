@@ -103,8 +103,7 @@ public Action Command_ReloadConfig(int client, int args)
 
 public void ReloadConfig()
 {
-    if (g_kvConfig != null)
-        CloseHandle(g_kvConfig);
+    delete g_kvConfig;
 
     char configFilePath[255];
     BuildPath(Path_SM, configFilePath, sizeof(configFilePath), "configs/native_customvotes.cfg");
