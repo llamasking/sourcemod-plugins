@@ -4,12 +4,12 @@
 	{
 		"Version"
 		{
-			"Latest"	"1.2.1"
+			"Latest"	"1.2.2"
 		}
 
-		"Notes"	"Fixed an issue where parsing a URL parsing would error."
-		"Notes"	"Fixed an issue where an incorrect map ID would be displayed in chat."
-		"Notes"	"Code optimizations."
+		"Notes"	"Log error if regex fails to match URL."
+		"Notes"	"Move '[Workshop]' prefix to translation instead of being hardcoded."
+		"Notes"	"Maybe a recompile will magically fix the vote counts not showing anymore?"
 	}
 
 	"Files"

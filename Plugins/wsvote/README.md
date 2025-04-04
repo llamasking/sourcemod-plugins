@@ -2,7 +2,13 @@
 
 ## Changelog
 
-v1.2.1 (2024-04-19) [(Latest)]()
+v1.2.2 (2025-04-03) [(Latest)]()
+
+- Log error if regex fails to match URL.
+- Move '[Workshop]' prefix to translation instead of being hardcoded.
+- Maybe a recompile will magically fix the vote counts not showing anymore?
+
+v1.2.1 (2024-04-19) [(Commit)](https://github.com/llamasking/sourcemod-plugins/commit/95f187a5dbef7a797417b6fbe849b7c5259c4a61)
 
 - Fixed an issue where parsing a URL parsing would error.
 - Fixed an issue where an incorrect map ID would be displayed in chat.

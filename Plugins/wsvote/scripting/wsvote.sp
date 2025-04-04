@@ -27,7 +27,7 @@
 #pragma newdecls required
 
 //#define DEBUG
-#define VERSION    "1.2.1"
+#define VERSION    "1.2.2"
 #define UPDATE_URL "https://raw.githubusercontent.com/llamasking/sourcemod-plugins/master/Plugins/wsvote/updatefile.txt"
 
 #if !defined DEBUG
@@ -209,7 +209,7 @@ public Action Timer_NotifyPlayer(Handle timer, any userid)
     int client = GetClientOfUserId(userid);
 
     if (IsClientValid(client))
-        CPrintToChat(client, "{gold}[Workshop]{default} %t", "WsVote_CurrentMap_Workshop", g_cmap_name, g_cmap_id);
+        CPrintToChat(client, "%t %t", "WsVote_Prefix", "WsVote_CurrentMap_Workshop", g_cmap_name, g_cmap_id);
 
     return Plugin_Handled;
 }
@@ -218,9 +218,9 @@ public Action Timer_NotifyPlayer(Handle timer, any userid)
 public Action Command_CurrentMap(int client, int args)
 {
     if (g_cmap_stock)
-        CPrintToChat(client, "{gold}[Workshop]{default} %t", "WsVote_CurrentMap_Stock", g_cmap_name);
+        CPrintToChat(client, "%t %t", "WsVote_Prefix", "WsVote_CurrentMap_Stock", g_cmap_name);
     else
-        CPrintToChat(client, "{gold}[Workshop]{default} %t", "WsVote_CurrentMap_Workshop", g_cmap_name, g_cmap_id);
+        CPrintToChat(client, "%t %t", "WsVote_Prefix", "WsVote_CurrentMap_Workshop", g_cmap_name, g_cmap_id);
 
     return Plugin_Handled;
 }
@@ -235,7 +235,7 @@ public Action Command_WsVote(int client, int args)
     // Ignore console/rcon and spectators.
     if (client == 0 || GetClientTeam(client) < 2)
     {
-        CReplyToCommand(client, "{gold}[Workshop]{default} %t", "WsVote_Spectator");
+        CReplyToCommand(client, "%t %t", "WsVote_Prefix", "WsVote_Spectator");
         return Plugin_Handled;
     }
 
@@ -250,21 +250,21 @@ public Action Command_WsVote(int client, int args)
         // Arg 1 is just 'https'. It used to be the entire url, but it changed at some point.
 
         char cmd_buff[128];
-        GetCmdArgString(cmd_buff, sizeof(cmd_buff));                                          // Read entire command into buffer
-        if (r_get_map_id.Match(cmd_buff) <= 0)                                                // Run regex on buffer.
-        {                                                                                     // If regex fails to find id, error
-            CReplyToCommand(client, "{gold}[Workshop]{default} %t", "WsVote_CallVote_NoId");  //
-            LogError("Regex match failed for command '%s'", cmd_buff);                        //
-            return Plugin_Handled;                                                            //
-        }                                                                                     //
-        r_get_map_id.GetSubString(1, map_id, sizeof(map_id));                                 // Regex found id
+        GetCmdArgString(cmd_buff, sizeof(cmd_buff));                                    // Read entire command into buffer
+        if (r_get_map_id.Match(cmd_buff) <= 0)                                          // Run regex on buffer.
+        {                                                                               // If regex fails to find id, error
+            CReplyToCommand(client, "%t %t", "WsVote_Prefix", "WsVote_CallVote_NoId");  //
+            LogError("Regex match failed for command '%s'", cmd_buff);                  //
+            return Plugin_Handled;                                                      //
+        }                                                                               //
+        r_get_map_id.GetSubString(1, map_id, sizeof(map_id));                           // Regex found id
     }
 
     // Map ID must be stored as a string because StringToInt(map_id) will int overflow,
     // but this works to test if the map_id string is a number.
     if (StringToInt(map_id) == 0)
     {
-        CReplyToCommand(client, "{gold}[Workshop]{default} %t", "WsVote_CallVote_NoId");
+        CReplyToCommand(client, "%t %t", "WsVote_Prefix", "WsVote_CallVote_NoId");
         return Plugin_Handled;
     }
 
@@ -306,9 +306,10 @@ public void ReqCallback(Handle req, bool failure, bool requestSuccessful, EHTTPS
         return;
     }
 
+    // Check API request succeeded
     if (failure || !requestSuccessful || statusCode != k_EHTTPStatusCode200OK)
     {
-        CPrintToChat(client, "{gold}[Workshop]{default} %t", "WsVote_CallVote_ApiFailure");
+        CPrintToChat(client, "%t %t", "WsVote_Prefix", "WsVote_CallVote_ApiFailure");
         LogError("Error on request for id: '%s'", map_id);
         delete req;
         delete pack;
@@ -332,10 +333,10 @@ public void ReqCallback(Handle req, bool failure, bool requestSuccessful, EHTTPS
     kv.JumpToKey("0");
 
     // Verify the item is actually for TF2 and has enough subscribers.
-    // Also accidentally verifies that the id is actually a map since apparently only maps can have subscriptions.
+    // Also ends up verifying that the item is actually a map since apparently only maps can have subscriptions.
     if (kv.GetNum("consumer_app_id") != 440 || (kv.GetNum("lifetime_subscriptions") < GetConVarInt(g_minsubs)))
     {
-        CPrintToChat(client, "{gold}[Workshop]{default} %t", "WsVote_CallVote_InvalidItem");
+        CPrintToChat(client, "%t %t", "WsVote_Prefix", "WsVote_CallVote_InvalidItem");
 
         delete kv;
         delete pack;
@@ -352,7 +353,7 @@ public void ReqCallback(Handle req, bool failure, bool requestSuccessful, EHTTPS
     // Abort if a vote is already in progress.
     if (NativeVotes_IsVoteInProgress())
     {
-        CPrintToChat(client, "{gold}[Workshop]{default} %t", "WsVote_ExistingVote");
+        CPrintToChat(client, "%t %t", "WsVote_Prefix", "WsVote_ExistingVote");
         delete pack;
         return;
     }
@@ -380,7 +381,7 @@ public void ReqCallback(Handle req, bool failure, bool requestSuccessful, EHTTPS
     }
     else
     {
-        CPrintToChat(client, "{gold}[Workshop]{default} %t", "WsVote_ExistingVote");
+        CPrintToChat(client, "%t %t", "WsVote_Prefix", "WsVote_ExistingVote");
         delete pack;
         vote.Close();
     }
@@ -419,7 +420,7 @@ public int Nv_Vote_Handler(NativeVote vote, MenuAction action, int param1, int p
                 if (IsClientValid(initiator_client))
                     PrintHintText(initiator_client, "%t", "WsVote_CallVote_FailWarning");
 
-                CPrintToChatAll("{gold}[Workshop]{default} %t", "WsVote_CallVote_VotePass", map_name, RoundToNearest(delay));
+                CPrintToChatAll("%t %t", "WsVote_Prefix", "WsVote_CallVote_VotePass", map_name, RoundToNearest(delay));
 
                 // Create a new DataPack containing just the map id to pass through the timer.
                 // This allows g_active_vote_info to always be cleared when vote ends and not be worried about any further.

@@ -1,5 +1,9 @@
 "Phrases"
 {
+    "WsVote_Prefix"
+    {
+        "en"    "{gold}[Workshop]{default}"
+    }
     "WsVote_CurrentMap_Stock"
     {
         "#format"    "{1:s}"
@@ -42,4 +46,5 @@
     "WsVote_ExistingVote"
     {
         "en"    "A vote is already in progress."
-}}
+    }
+}
