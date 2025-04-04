@@ -1,7 +1,7 @@
 // *************************************************************************
 //  This file is part of SourceBans++.
 //
-//  Copyright (C) 2014-2019 SourceBans++ Dev Team <https://github.com/sbpp>
+//  Copyright (C) 2014-2024 SourceBans++ Dev Team <https://github.com/sbpp>
 //
 //  SourceBans++ is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
@@ -105,5 +105,13 @@ forward void SBPP_OnBanPlayer(int iAdmin, int iTarget, int iTime, const char[] s
  * @noreturn
  *********************************************************/
 forward void SBPP_OnReportPlayer(int iReporter, int iTarget, const char[] sReason);
+
+/*********************************************************
+ * Called when OnClientPreAdminCheck is about to be triggered
+ *
+ * @param	part	The AdminCachePart being processed
+ * @return	bBlock	If enabled, blocks the trigger for OnClientPreAdminCheck
+ *********************************************************/
+forward bool SBPP_OnClientPreAdminCheck(AdminCachePart part);
 
 //Yarr!
