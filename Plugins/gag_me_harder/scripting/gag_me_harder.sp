@@ -24,7 +24,11 @@
 #include <multicolors>
 #include <sourcemod>
 
-#define VERSION "1.0"
+#define VERSION "1.0.1"
+
+#define MESSAGE_FLAG_DEAD (1 << 0)
+#define MESSAGE_FLAG_SPEC (1 << 1)
+#define MESSAGE_FLAG_TEAM (1 << 2)
 
 enum messageType
 {
@@ -102,8 +106,16 @@ public Action OnClientSayCommand(int client, const char[] command, const char[] 
 
         // Prints out message
         for (int i = 1; i <= MaxClients; i++)
+        {
             if (IsClientValid(i))
+            {
+                // Team Chat
+                if ((type & MESSAGE_FLAG_TEAM) && (GetClientTeam(client) != GetClientTeam(i)))
+                    continue;
+
                 CPrintToChatEx(i, client, "%t", tKey, sName, sMsg);
+            }
+        }
 
         return Plugin_Handled;
     }
