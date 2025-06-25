@@ -1,0 +1,25 @@
+"Phrases"
+{
+    "PP_Prefix"
+    {
+        "en"    "{gold}[Password]{default}"
+    }
+    "PP_Server_NowPrivate"
+    {
+        "#format"    "{1:s}"
+        "en"    "The server is now private. The password required to join is '{green}{1}{default}'. If you forget, use '{green}/password{default}' to view it again."
+    }
+    "PP_Server_NowPublic"
+    {
+        "en"    "The server is one again public. A password is no longer required to join."
+    }
+    "PP_Password_Reminder"
+    {
+        "#format"    "{1:s}"
+        "en"    "The password required to join is '{green}{1}{default}'"
+    }
+    "PP_Password_Reminder_NoPass"
+    {
+        "en"    "There is currently no password required to join."
+    }
+}
