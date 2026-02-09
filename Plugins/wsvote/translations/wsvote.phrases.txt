@@ -9,7 +9,7 @@
     {
         "#format"    "{1:s}"
         "en"    "The current map is '{green}{1}{default}.'"
-        "es"    "El mapa actual es '{green}{1}{default}.'"
+        "es"    "El mapa actual es '{green}{1}{default}'."
     }
     "WsVote_CurrentMap_Workshop"
     {
