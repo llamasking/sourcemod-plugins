@@ -3,48 +3,58 @@
     "WsVote_Prefix"
     {
         "en"    "{gold}[Workshop]{default}"
+        "es"    "{gold}[Workshop]{default}"
     }
     "WsVote_CurrentMap_Stock"
     {
         "#format"    "{1:s}"
         "en"    "The current map is '{green}{1}{default}.'"
+        "es"    "El mapa actual es '{green}{1}{default}.'"
     }
     "WsVote_CurrentMap_Workshop"
     {
         "#format"    "{1:s},{2:s}"
-        "en"    "The current map is '{green}{1}{default}' from the workshop and its id is {2}."
+        "en"    "The current map is '{green}{1}{default}' from the workshop and its ID is {2}."
+        "es"    "El mapa actual es '{green}{1}{default}' de Workshop y su ID es {2}."
     }
     "WsVote_DebugMode_Enabled"
     {
-        "en"    "This server is runninga debug build of WsVote! If this is not expected, please contact the server administrator immediately."
+        "en"    "This server is running a debug build of WsVote! If this is not expected, please contact the server administrator immediately."
     }
     "WsVote_Spectator"
     {
         "en"    "Spectators may not call votes."
+        "es"    "Los espectadores no pueden iniciar votaciones."
     }
     "WsVote_CallVote_NoId"
     {
-        "en"    "A workshop map id was not provided."
+        "en"    "A workshop map ID was not provided."
+        "es"    "No se ha proporcionado un ID de mapa de Workshop."
     }
     "WsVote_CallVote_ApiFailure"
     {
         "en"    "A server error has occurred. Please try again later."
+        "es"    "Se ha producido un error del servidor. Inténtalo de nuevo más tarde."
     }
     "WsVote_CallVote_InvalidItem"
     {
-        "en"    "The given id is invalid or does not have enough subscribers."
+        "en"    "The given ID is invalid or does not have enough subscribers."
+        "es"    "El ID proporcionado no es válido o no tiene suficientes suscriptores."
     }
     "WsVote_CallVote_FailWarning"
     {
         "en"    "If the server does not load the map, please try again. It simply failed to download it."
+        "es"    "Si el servidor no carga el mapa, vuelve a intentarlo. Simplemente no se ha podido descargar."
     }
     "WsVote_CallVote_VotePass"
     {
         "#format"    "{1:s},{2:i}"
         "en"    "Vote passed. The map will change to '{green}{1}{default}' in {2} seconds."
+        "es"    "Votación aprobada. El mapa cambiará a '{green}{1}{default}' en {2} segundos."
     }
     "WsVote_ExistingVote"
     {
         "en"    "A vote is already in progress."
+        "es"    "Ya hay una votación en curso."
     }
 }
