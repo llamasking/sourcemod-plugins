@@ -7,19 +7,23 @@
     "PP_Server_NowPrivate"
     {
         "#format"    "{1:s}"
-        "en"    "The server is now private. The password required to join is '{green}{1}{default}'. If you forget, use '{green}/password{default}' to view it again."
+        "en"    "The server is now private. The password required to join is {green}{1}{default}. If you forget, use '{green}/password{default}' to view it again."
+        "es"    "El servidor ahora es privado. La contraseña necesaria para unirse es {green}{1}{default}. Si la olvida, utilice '{green}/password{default}' para volver a verla."
     }
     "PP_Server_NowPublic"
     {
         "en"    "The server is one again public. A password is no longer required to join."
+        "es"    "El servidor vuelve a ser público. Ya no se necesita contraseña para unirse."
     }
     "PP_Password_Reminder"
     {
         "#format"    "{1:s}"
-        "en"    "The password required to join is '{green}{1}{default}'"
+        "en"    "The password required to join is {green}{1}{default}."
+        "es"    "La contraseña necesaria para unirse es {green}{1}{default}."
     }
     "PP_Password_Reminder_NoPass"
     {
         "en"    "There is currently no password required to join."
+        "es"    "Actualmente no se necesita contraseña para unirse."
     }
 }
