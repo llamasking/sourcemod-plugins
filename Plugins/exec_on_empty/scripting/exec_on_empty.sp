@@ -91,6 +91,7 @@ public void OnMapEnd()
     if (g_timer != INVALID_HANDLE)
     {
         CloseHandle(g_timer);
+        g_timer = INVALID_HANDLE;
     }
 }
 
