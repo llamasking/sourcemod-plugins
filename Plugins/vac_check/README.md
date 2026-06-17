@@ -4,33 +4,46 @@ Checks a player's VAC and Game Ban status when they join the game.
 
 ## ConVars
 
-| ConVar            | Default | Description                                                                               |
-| ----------------- | ------- | ----------------------------------------------------------------------------------------- |
-| sm_vac_api_key    |         | Your Steam Web API key.                                                                   |
-| sm_vac_max_age    | `2555`  | The minimum age (in days) of a VAC/game ban before it is forgiven. (0 = Never)            |
-| sm_vac_max_bans   | `2`     | The maximum forgivable number of old bans.                                                |
-| sm_vac_ban_length | `-1`    | Duration of server ban for VAC'd accounts. (In days. -1 = until 'max age', 0 = permanent) |
+| ConVar              | Default | Description                                                                               |
+| -----------------   | ------- | ----------------------------------------------------------------------------------------- |
+| sm_vac_api_key      |         | Your Steam Web API key.                                                                   |
+| sm_vac_max_age      | `2555`  | The minimum age (in days) of a VAC/game ban before it is forgiven. (0 = Never)            |
+| sm_vac_max_bans     | `2`     | The maximum forgivable number of old bans.                                                |
+| sm_vac_ban_length   | `-1`    | Duration of server ban for VAC'd accounts. (In days. -1 = until 'max age', 0 = permanent) |
+| sm_vac_penalty_type | `1`     | How to remove the player. (0 = kick, 1 = ban)                                             |
 
 ## Description
 
-When a player joins the server, this checks their account for VAC/Game bans. If they have no bans, or they have a small enough number of bans with none being recent, they are permitted to play. Accounts which have recent bans, or too many bans are forbidden from joining.
+When a player joins the server, this checks their account for VAC/Game bans. If they have no bans, or they have a small enough number of bans with none being recent, they are permitted to play. Accounts which have recent bans, or have too many bans are forbidden from joining.
 
 The criteria for an account being permitted to play are that they must:
 
 1. Have not received a new VAC/Game ban in at least `sm_vac_max_age` days.
-2. Have not received more than `sm_vac_max_bans` total VAC + Game bans ever.
-   - Accounts which have received more than this number are permanently server banned, regardless `sm_vac_ban_length`.
+2. Have not received more than `sm_vac_max_bans` total VAC + Game bans in total.
 
-Accounts which do not fall under the above criteria receive a ban. The duration is determined as follows:
+If either of the above statements are false, the account is either kicked or banned as set by `sm_vac_penalty_type`.
+If the account is to be banned, the duration is determined as follows:
 
-1. If `sm_vac_ban_length` is set to `-1`, it will be until the most recent ban is `sm_vac_max_age` days old.
-2. If `sm_vac_ban_length` is set to `0`, it will be permanent.
-3. If the total number of VAC + Game bans is greater than `sm_vac_max_bans`, it will be permanent.
+1. If the total number of VAC + Game bans is greater than `sm_vac_max_bans`, it will be permanent.
+2. If `sm_vac_ban_length` is set to `-1`, it will be until the most recent ban is `sm_vac_max_age` days old.
+3. If `sm_vac_ban_length` is set to `0`, it will be permanent.
 4. Otherwise, it will be for `sm_vac_ban_length` days.
 
 ## Changelog
 
-v1.0.0 (2025-03-21) [(Latest)]()
+v1.1.1 (2026-06-17) [(Latest)]()
+
+- Fix a logging-related error when `sm_vac_penalty_type` was configured to kick clients.
+
+v1.1.0 (2025-06-25) [(Commit)](https://github.com/llamasking/sourcemod-plugins/commit/69d82fbebfd2544dd72977d09e55dc491e2daf86)
+
+- Add 'sm_vac_penalty_type' convar to control if player is banned (default) or kicked.
+
+v1.0.1 (2025-03-31) [(Commit)](https://github.com/llamasking/sourcemod-plugins/commit/ead3dcdd733e2efffa5e38c1ee49b67452e3c56a)
+
+- Shorten and improve ban message.
+
+v1.0.0 (2025-03-21) [(Commit)](https://github.com/llamasking/sourcemod-plugins/commit/0b022a2759b3b79e9a603c683a28a1fcb8c3bc82)
 
 - Re-add SourceBans++ support. (This time it actually works.)
   - Primary motivation is to allow for Sleuth to be used for duplicate account detection.

@@ -4,10 +4,10 @@
 	{
 		"Version"
 		{
-			"Latest"	"1.1.0"
+			"Latest"	"1.1.1"
 		}
 
-		"Notes"	"Add 'sm_vac_penalty_type' convar which controls if player is banned (default) or kicked."
+		"Notes"	"Fix a logging-related error when `sm_vac_penalty_type` was configured to kick clients."
 	}
 
 	"Files"
