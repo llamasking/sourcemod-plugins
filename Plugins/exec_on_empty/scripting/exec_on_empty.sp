@@ -10,21 +10,21 @@
 
 public Plugin myinfo =
 {
-    name        = "Execute on Empty",
-    author      = "llamasking",
-    description = "Executes a config whenever the server is empty.",
-    version     = VERSION,
-    url         = "https://github.com/llamasking/sourcemod-plugins",
+        name        = "Execute on Empty",
+        author      = "llamasking",
+        description = "Executes a config whenever the server is empty.",
+        version     = VERSION,
+        url         = "https://github.com/llamasking/sourcemod-plugins",
 
 
 }
 
-ConVar g_enabled;    // Whether or not the plugin is on
-ConVar g_config;     // Config file to load
+ConVar g_enabled;  // Whether or not the plugin is on
+ConVar g_config;   // Config file to load
 
-int    g_players;                   // Player count
-Handle g_clients;                   // List of clients connected
-Handle g_timer = INVALID_HANDLE;    // Timer to exec config everyone leaves
+int g_players;                    // Player count
+Handle g_clients;                 // List of clients connected
+Handle g_timer = INVALID_HANDLE;  // Timer to exec config everyone leaves
 
 //
 public void OnPluginStart()
@@ -88,8 +88,7 @@ public void OnClientDisconnect(int client)
 public void OnMapEnd()
 {
     // Prevent errors when everyone actually does leave.
-    // IsValidHandle is deprecated but idk a good alternative.
-    if (IsValidHandle(g_timer))
+    if (g_timer != INVALID_HANDLE)
     {
         CloseHandle(g_timer);
     }
@@ -104,6 +103,8 @@ public Action ExecCfg(Handle timer)
 
     GetConVarString(g_config, cfg, sizeof(cfg));
     ServerCommand("exec \"%s\"", cfg);
+
+    g_timer = INVALID_HANDLE;
 
     return Plugin_Stop;
 }
